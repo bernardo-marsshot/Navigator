@@ -36,7 +36,7 @@
       padding: 0 1rem;
       /* Espaço lateral */
     }
-    
+
     .nav-inner ul:first-child {
       display: flex;
       align-items: center;
@@ -396,23 +396,9 @@
             <ul>
               <li>
                 <img src="/static/navigator-logo.png" alt="Navigator Logo" class="navigator-logo">
-                <strong>Navigator — Market Intel (MVP)</strong>
               </li>
               <li style="flex: 1; text-align: center;">
-                <strong>Pricing</strong>
-              </li>
-            </ul>
-            <ul>
-              <li><a href="/">Dashboard</a></li>
-              <li><a href="/admin/">Admin</a></li>
-              <li>
-                <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
-                  {% csrf_token %}
-                  <button type="submit" class="nav-btn">
-                    <span style="margin-right: 0.5rem;">🔄</span>
-                    Scrape Now
-                  </button>
-                </form>
+               <center><strong>Pricing</strong>
               </li>
             </ul>
           </div>
@@ -437,10 +423,8 @@
       </main>
     </div>
     <footer class="footer">
-      <div class="container">
-        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
-          target="_blank">www.marsshot.eu</a>
-      </div>
+      Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
+        target="_blank">www.marsshot.eu</a>
     </footer>
   </div>
 
