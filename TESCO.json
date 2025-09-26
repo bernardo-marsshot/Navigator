@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://www.tesco.com/groceries/en-GB/products/281055580",
+    "timestamp": "2025-09-26 09:23:36",
+    "retailer": "Tesco",
+    "title": "Tesco Product (Demo Data)",
+    "price": "2.24",
+    "currency": "£",
+    "price_text": "£1.67",
+    "description": "Demo product from Tesco groceries - actual data blocked by anti-scraping measures",
+    "scraping_status": "demo_fallback",
+    "note": "Real scraping blocked by Tesco's protection. This is demonstration data."
+  }
+]
