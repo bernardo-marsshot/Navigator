@@ -117,9 +117,30 @@
           <ul>
             <li><a href="/">Dashboard</a></li>
             <li><a href="/admin/">Admin</a></li>
-            <li><a href="/scrape-now/">Scrape Now</a></li>
+            <li>
+              <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: var(--navigator-white); cursor: pointer; text-decoration: none; font: inherit;">Scrape Now</button>
+              </form>
+            </li>
           </ul>
         </nav>
+        
+        <!-- Django Messages -->
+        {% if messages %}
+        <div style="margin-bottom: 1rem;">
+          {% for message in messages %}
+          <div style="padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 0.375rem; 
+                      {% if message.tags == 'success' %}background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;
+                      {% elif message.tags == 'error' %}background-color: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;
+                      {% elif message.tags == 'info' %}background-color: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd;
+                      {% else %}background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db;{% endif %}">
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        
         {% block content %}{% endblock %}
       </main>
     </div>
