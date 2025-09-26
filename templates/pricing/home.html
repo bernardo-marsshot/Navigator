@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>SKUs — Últimos preços</h2>
+<table>
+  <thead>
+    <tr>
+      <th>SKU</th>
+      <th>Nome</th>
+      <th>Último preço</th>
+      <th>Promo</th>
+      <th>Moeda</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for sku in skus %}
+    {% with latest_pp=latest%}
+    <tr>
+      <td>{{ sku.code }}</td>
+      <td>{{ sku.name }}</td>
+      <td>{% if latest_pp and latest_pp.price %}{{ latest_pp.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if latest_pp and latest_pp.promo_price %}{{ latest_pp.promo_price }} ({{ latest_pp.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}</td>
+      <td><a href="{% url 'sku_detail' sku.id %}">ver</a></td>
+    </tr>
+    {% endwith %}
+  {% endfor %}
+  </tbody>
+</table>
+<p class="muted">Dica: use o Admin para configurar Retailers, Selectors e Listings.</p>
+{% endblock %}

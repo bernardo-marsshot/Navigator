@@ -1,0 +1,40 @@
+[
+  {
+    "model": "pricing.retailer",
+    "pk": 1,
+    "fields": {
+      "name": "Books to Scrape",
+      "base_url": "https://books.toscrape.com",
+      "is_active": true
+    }
+  },
+  {
+    "model": "pricing.retailerselector",
+    "pk": 1,
+    "fields": {
+      "retailer": 1,
+      "price_selector": ".product_main .price_color",
+      "promo_price_selector": "",
+      "promo_text_selector": ".product_main .price_color ~ p.instock.availability"
+    }
+  },
+  {
+    "model": "pricing.sku",
+    "pk": 1,
+    "fields": {
+      "code": "BOOK-0001",
+      "name": "Demo Book SKU",
+      "competitor_names": ""
+    }
+  },
+  {
+    "model": "pricing.skulisting",
+    "pk": 1,
+    "fields": {
+      "sku": 1,
+      "retailer": 1,
+      "url": "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+      "is_active": true
+    }
+  }
+]

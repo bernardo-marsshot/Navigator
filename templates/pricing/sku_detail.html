@@ -1,0 +1,54 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ sku.code }} — {{ sku.name }}</h2>
+
+<canvas id="priceChart"></canvas>
+
+<script>
+const ctx = document.getElementById('priceChart');
+const labels = [{% for p in price_points %}"{{ p.timestamp|date:'Y-m-d H:i' }}",{% endfor %}];
+const prices = [{% for p in price_points %}{{ p.promo_price|default:p.price|default:'null' }},{% endfor %}];
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Preço (promo se existir)',
+      data: prices,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: false }
+    }
+  }
+});
+</script>
+
+<h3>Histórico</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Retalhista</th>
+      <th>Preço</th>
+      <th>Promo</th>
+      <th>Nota</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in price_points %}
+    <tr>
+      <td>{{ p.timestamp }}</td>
+      <td>{{ p.sku_listing.retailer.name }}</td>
+      <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
+      <td class="muted">{{ p.raw_snapshot|truncatechars:120 }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
