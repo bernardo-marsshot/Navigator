@@ -339,41 +339,42 @@
     }
 
     /* Layout structure for white content area and dark footer */
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       padding: 0;
     }
-    
+
     .page-wrapper {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       background-color: var(--navigator-white);
     }
-    
+
     .content-wrapper {
       flex: 1;
       background-color: var(--navigator-white);
       padding: 0 1rem 2rem 1rem;
       margin-bottom: 2rem;
     }
-    
+
     /* Ensure content containers have white backgrounds */
     .container {
       background-color: var(--navigator-white);
       padding: 0 1rem;
     }
-    
+
     /* Override Pico table styling to ensure white backgrounds */
     table {
       background-color: var(--navigator-white) !important;
     }
-    
+
     table tr {
       background-color: var(--navigator-white) !important;
     }
-    
+
     table tr:nth-child(even) {
       background-color: #f8f9fa !important;
     }
@@ -394,20 +395,10 @@
             </ul>
             <ul>
               <li><a href="/">Dashboard</a></li>
-              <li><a href="/admin/">Admin</a></li>
-              <li>
-                <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
-                  {% csrf_token %}
-                  <button type="submit" class="nav-btn">
-                    <span style="margin-right: 0.5rem;">🔄</span>
-                    Scrape Now
-                  </button>
-                </form>
-              </li>
             </ul>
           </div>
         </nav>
-        
+
         <!-- Django Messages -->
         {% if messages %}
         <div style="margin-bottom: 1rem;">
@@ -422,13 +413,14 @@
           {% endfor %}
         </div>
         {% endif %}
-        
+
         {% block content %}{% endblock %}
       </main>
     </div>
     <footer class="footer">
       <div class="container">
-        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu" target="_blank">www.marsshot.eu</a>
+        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
+          target="_blank">www.marsshot.eu</a>
       </div>
     </footer>
   </div>
