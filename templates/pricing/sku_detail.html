@@ -32,31 +32,96 @@
 
 <script>
 const ctx = document.getElementById('priceChart');
-const labels = [
-  {% for p in price_points %}
-    "{{ p.timestamp|date:'Y-m-d H:i' }}"{% if not forloop.last %}, {% endif %}
-  {% endfor %}
+
+// Agrupar dados por retalhista
+const retailerData = {};
+const allLabels = new Set();
+
+{% for p in price_points %}
+const retailer_{{ forloop.counter }} = "{{ p.sku_listing.retailer.name }}";
+const timestamp_{{ forloop.counter }} = "{{ p.timestamp|date:'Y-m-d H:i' }}";
+const price_{{ forloop.counter }} = {{ p.promo_price|default:p.price|default:"null" }};
+
+if (!retailerData[retailer_{{ forloop.counter }}]) {
+  retailerData[retailer_{{ forloop.counter }}] = {};
+}
+retailerData[retailer_{{ forloop.counter }}][timestamp_{{ forloop.counter }}] = price_{{ forloop.counter }};
+allLabels.add(timestamp_{{ forloop.counter }});
+{% endfor %}
+
+// Converter labels para array ordenado
+const labels = Array.from(allLabels).sort();
+
+// Cores para diferentes retalhistas
+const colors = [
+  '#FF6B35', // Navigator Orange
+  '#FF8A65', // Navigator Orange Light
+  '#4A90E2', // Blue
+  '#50C878', // Green
+  '#FFB347', // Orange
+  '#DA70D6', // Orchid
+  '#40E0D0', // Turquoise
+  '#F0E68C'  // Khaki
 ];
-const prices = [
-  {% for p in price_points %}
-    {{ p.promo_price|default:p.price|default:"null" }}{% if not forloop.last %}, {% endif %}
-  {% endfor %}
-];
+
+// Criar datasets para cada retalhista
+const datasets = [];
+let colorIndex = 0;
+
+for (const retailerName in retailerData) {
+  const data = labels.map(label => retailerData[retailerName][label] || null);
+  
+  datasets.push({
+    label: `${retailerName} (£)`,
+    data: data,
+    borderColor: colors[colorIndex % colors.length],
+    backgroundColor: colors[colorIndex % colors.length] + '20', // 20% opacity
+    fill: false,
+    tension: 0.1,
+    pointRadius: 4,
+    pointHoverRadius: 6
+  });
+  
+  colorIndex++;
+}
 
 new Chart(ctx, {
   type: 'line',
   data: {
     labels: labels,
-    datasets: [{
-      label: 'Preço (promo se existir)',
-      data: prices,
-    }]
+    datasets: datasets
   },
   options: {
     responsive: true,
-    maintainAspectRatio: false, // respeita altura da div
+    maintainAspectRatio: false,
     scales: {
-      y: { beginAtZero: false }
+      y: { 
+        beginAtZero: false,
+        title: {
+          display: true,
+          text: 'Preço (£)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Tempo'
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      title: {
+        display: true,
+        text: 'Evolução de Preços por Retalhista'
+      }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index'
     }
   }
 });
