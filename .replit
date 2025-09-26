@@ -4,6 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+packages = ["geckodriver", "gitFull", "playwright-driver", "chromium"]
 
 [workflows]
 runButton = "Project"
@@ -34,8 +35,8 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 39421
-externalPort = 3001
+localPort = 44893
+externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"

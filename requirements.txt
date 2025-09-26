@@ -5,3 +5,8 @@ beautifulsoup4>=4.12.0
 beautifulsoup4>=4.12.0
 Django>=5.0,<6.0
 requests>=2.31.0
+cloudscraper
+fake-useragent
+playwright
+requests-html
+selenium
