@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -29,13 +28,15 @@
     </tr>
   </thead>
   <tbody>
-  {% for sku in skus %}
+    {% for sku in skus %}
     {% with latest_pp=latest%}
     <tr>
       <td>{{ sku.code }}</td>
       <td>{{ sku.name }}</td>
-      <td>{% if latest_pp and latest_pp.price %}{{ latest_pp.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
-      <td>{% if latest_pp and latest_pp.promo_price %}{{ latest_pp.promo_price }} ({{ latest_pp.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
+      <td>{% if latest_pp and latest_pp.price %}{{ latest_pp.price }}{% else %}<span class="muted">—</span>{% endif %}
+      </td>
+      <td>{% if latest_pp and latest_pp.promo_price %}{{ latest_pp.promo_price }} ({{ latest_pp.promo_text }}){% else
+        %}<span class="muted">—</span>{% endif %}</td>
       <td>{% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}</td>
       <td>
         <div class="table-actions">
@@ -47,17 +48,14 @@
       </td>
     </tr>
     {% endwith %}
-  {% endfor %}
+    {% endfor %}
   </tbody>
 </table>
-<!-- Floating Action Button for Quick Actions -->
-<a href="/admin/" class="btn btn-primary btn-fab" title="Configurações rápidas">
-  <span style="font-size: 1.25rem;">⚙️</span>
-</a>
 
-<div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; border-left: 4px solid var(--navigator-orange);">
+<div
+  style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; border-left: 4px solid var(--navigator-orange);">
   <p style="margin: 0; color: var(--navigator-grey); font-size: 0.875rem;">
-    <strong>💡 Dica:</strong> Use o painel de configurações para gerir Retailers, Selectors e Listings. 
+    <strong>💡 Dica:</strong> Use o painel de configurações para gerir Retailers, Selectors e Listings.
     O botão "Atualizar preços" executa scraping em tempo real de todos os produtos ativos.
   </p>
 </div>
