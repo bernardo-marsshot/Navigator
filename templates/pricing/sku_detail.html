@@ -1,7 +1,29 @@
 
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ sku.code }} — {{ sku.name }}</h2>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2 style="margin: 0 0 0.5rem 0;">{{ sku.code }}</h2>
+    <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.name }}</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="/" class="btn btn-ghost btn-sm">
+      <span style="margin-right: 0.5rem;">← </span>
+      Voltar
+    </a>
+    <button onclick="window.print()" class="btn btn-secondary btn-sm">
+      <span style="margin-right: 0.5rem;">🖨️</span>
+      Imprimir
+    </button>
+    <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success btn-sm">
+        <span style="margin-right: 0.5rem;">🔄</span>
+        Atualizar dados
+      </button>
+    </form>
+  </div>
+</div>
 
 <canvas id="priceChart"></canvas>
 
