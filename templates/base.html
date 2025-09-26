@@ -8,24 +8,126 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --navigator-green: #006B54;
+      --navigator-white: #ffffff;
+      --navigator-black: #2c2c2c;
+      --navigator-grey: #6b7280;
+    }
+    
+    /* Navigator branding colors */
+    body {
+      background-color: var(--navigator-white);
+      color: var(--navigator-black);
+    }
+    
+    nav {
+      background-color: var(--navigator-green) !important;
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+      border-radius: 0.5rem;
+    }
+    
+    nav ul li strong, nav ul li a {
+      color: var(--navigator-white) !important;
+      text-decoration: none;
+    }
+    
+    nav ul li a:hover {
+      color: #f0f0f0 !important;
+    }
+    
+    .navigator-logo {
+      height: 40px;
+      width: auto;
+      margin-right: 1rem;
+      vertical-align: middle;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--navigator-green);
+    }
+    
+    table th {
+      background-color: var(--navigator-green);
+      color: var(--navigator-white);
+    }
+    
+    table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    
     .price-up { color: #b91c1c; }
-    .price-down { color: #065f46; }
-    .muted { color: #6b7280; }
+    .price-down { color: var(--navigator-green); }
+    .muted { color: var(--navigator-grey); }
+    
+    a {
+      color: var(--navigator-green);
+    }
+    
+    a:hover {
+      color: #004a3d;
+    }
+    
+    .footer {
+      margin-top: 3rem;
+      padding: 2rem 0 1rem 0;
+      border-top: 2px solid var(--navigator-green);
+      text-align: center;
+      color: var(--navigator-grey);
+      font-size: 0.9rem;
+    }
+    
+    .footer a {
+      color: var(--navigator-green);
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Make container full height */
+    html, body {
+      height: 100%;
+    }
+    
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .content-wrapper {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
-  <main class="container">
-    <nav>
-      <ul>
-        <li><strong>Navigator — Market Intel (MVP)</strong></li>
-      </ul>
-      <ul>
-        <li><a href="/">Dashboard</a></li>
-        <li><a href="/admin/">Admin</a></li>
-        <li><a href="/scrape-now/">Scrape Now</a></li>
-      </ul>
-    </nav>
-    {% block content %}{% endblock %}
-  </main>
+  <div class="page-wrapper">
+    <div class="content-wrapper">
+      <main class="container">
+        <nav>
+          <ul>
+            <li>
+              <img src="/static/navigator-logo.jpg" alt="Navigator Logo" class="navigator-logo">
+              <strong>Navigator — Market Intel (MVP)</strong>
+            </li>
+          </ul>
+          <ul>
+            <li><a href="/">Dashboard</a></li>
+            <li><a href="/admin/">Admin</a></li>
+            <li><a href="/scrape-now/">Scrape Now</a></li>
+          </ul>
+        </nav>
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+    <footer class="footer">
+      <div class="container">
+        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu" target="_blank">www.marsshot.eu</a>
+      </div>
+    </footer>
+  </div>
 </body>
 </html>
