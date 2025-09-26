@@ -1,6 +1,6 @@
-
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,86 +9,103 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --navigator-green: #006B54;
+      --navigator-orange: #FF6B35;
+      --navigator-orange-light: #FF8A65;
+      --navigator-orange-dark: #E55722;
+      --navigator-coral: #FF7961;
       --navigator-white: #ffffff;
       --navigator-black: #2c2c2c;
       --navigator-grey: #6b7280;
     }
-    
+
     /* Navigator branding colors */
     body {
       background-color: var(--navigator-white);
       color: var(--navigator-black);
     }
-    
+
     nav {
-      background-color: var(--navigator-green) !important;
+      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral)) !important;
       padding: 1rem 0;
       margin-bottom: 2rem;
       border-radius: 0.5rem;
     }
-    
-    nav ul li strong, nav ul li a {
+
+    nav ul li strong,
+    nav ul li a {
       color: var(--navigator-white) !important;
       text-decoration: none;
     }
-    
+
     nav ul li a:hover {
       color: #f0f0f0 !important;
     }
-    
+
     .navigator-logo {
       height: 40px;
       width: auto;
       margin-right: 1rem;
       vertical-align: middle;
     }
-    
-    h1, h2, h3, h4, h5, h6 {
-      color: var(--navigator-green);
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      color: var(--navigator-orange);
     }
-    
+
     table th {
-      background-color: var(--navigator-green);
+      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral));
       color: var(--navigator-white);
     }
-    
+
     table tr:nth-child(even) {
       background-color: #f8f9fa;
     }
-    
-    .price-up { color: #b91c1c; }
-    .price-down { color: var(--navigator-green); }
-    .muted { color: var(--navigator-grey); }
-    
+
+    .price-up {
+      color: #b91c1c;
+    }
+
+    .price-down {
+      color: var(--navigator-orange);
+    }
+
+    .muted {
+      color: var(--navigator-grey);
+    }
+
     a {
-      color: var(--navigator-green);
+      color: var(--navigator-orange);
     }
-    
+
     a:hover {
-      color: #004a3d;
+      color: var(--navigator-orange-dark);
     }
-    
+
     .footer {
       margin-top: 3rem;
       padding: 2rem 0 1rem 0;
-      border-top: 2px solid var(--navigator-green);
+      border-top: 2px solid var(--navigator-orange);
       text-align: center;
       color: var(--navigator-grey);
       font-size: 0.9rem;
     }
-    
+
     .footer a {
-      color: var(--navigator-green);
+      color: var(--navigator-orange);
       text-decoration: none;
     }
-    
+
     .footer a:hover {
       text-decoration: underline;
     }
-    
+
     /* Modern Button System - Inspired by Bizneo & Professional HR Software */
-    
+
     /* Base button styles */
     .btn {
       display: inline-flex;
@@ -108,109 +125,109 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .btn:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       text-decoration: none;
     }
-    
+
     .btn:active {
       transform: translateY(0);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    
+
     .btn:focus {
-      outline: 2px solid var(--navigator-green);
+      outline: 2px solid var(--navigator-orange);
       outline-offset: 2px;
     }
-    
+
     /* Primary button - Main actions */
     .btn-primary {
-      background: linear-gradient(135deg, var(--navigator-green), #008066);
+      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral));
       color: var(--navigator-white);
-      border: 1px solid var(--navigator-green);
+      border: 1px solid var(--navigator-orange);
     }
-    
+
     .btn-primary:hover {
-      background: linear-gradient(135deg, #005a49, var(--navigator-green));
+      background: linear-gradient(135deg, var(--navigator-orange-dark), var(--navigator-orange));
       color: var(--navigator-white);
-      border-color: #005a49;
+      border-color: var(--navigator-orange-dark);
     }
-    
+
     /* Secondary button - Secondary actions */
     .btn-secondary {
       background: var(--navigator-white);
-      color: var(--navigator-green);
-      border: 1.5px solid var(--navigator-green);
+      color: var(--navigator-orange);
+      border: 1.5px solid var(--navigator-orange);
     }
-    
+
     .btn-secondary:hover {
-      background: var(--navigator-green);
+      background: var(--navigator-orange);
       color: var(--navigator-white);
     }
-    
+
     /* Info button - Informational actions */
     .btn-info {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: var(--navigator-white);
       border: 1px solid #3b82f6;
     }
-    
+
     .btn-info:hover {
       background: linear-gradient(135deg, #1d4ed8, #1e40af);
       color: var(--navigator-white);
     }
-    
+
     /* Success button - Positive actions */
     .btn-success {
       background: linear-gradient(135deg, #10b981, #059669);
       color: var(--navigator-white);
       border: 1px solid #10b981;
     }
-    
+
     .btn-success:hover {
       background: linear-gradient(135deg, #059669, #047857);
       color: var(--navigator-white);
     }
-    
+
     /* Warning button - Caution actions */
     .btn-warning {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: var(--navigator-white);
       border: 1px solid #f59e0b;
     }
-    
+
     .btn-warning:hover {
       background: linear-gradient(135deg, #d97706, #b45309);
       color: var(--navigator-white);
     }
-    
+
     /* Danger button - Destructive actions */
     .btn-danger {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: var(--navigator-white);
       border: 1px solid #ef4444;
     }
-    
+
     .btn-danger:hover {
       background: linear-gradient(135deg, #dc2626, #b91c1c);
       color: var(--navigator-white);
     }
-    
+
     /* Button sizes */
     .btn-sm {
       padding: 0.5rem 1rem;
       font-size: 0.75rem;
       border-radius: 0.375rem;
     }
-    
+
     .btn-lg {
       padding: 1rem 2rem;
       font-size: 1rem;
       border-radius: 0.75rem;
     }
-    
+
     /* Icon buttons */
     .btn-icon {
       padding: 0.75rem;
@@ -218,46 +235,46 @@
       width: 2.75rem;
       height: 2.75rem;
     }
-    
+
     .btn-icon.btn-sm {
       padding: 0.5rem;
       width: 2rem;
       height: 2rem;
     }
-    
+
     /* Ghost/outline buttons */
     .btn-ghost {
       background: transparent;
       box-shadow: none;
-      border: 1.5px solid var(--navigator-green);
-      color: var(--navigator-green);
+      border: 1.5px solid var(--navigator-orange);
+      color: var(--navigator-orange);
     }
-    
+
     .btn-ghost:hover {
-      background: rgba(0, 107, 84, 0.1);
+      background: rgba(255, 107, 53, 0.1);
       transform: none;
-      box-shadow: 0 2px 8px rgba(0, 107, 84, 0.2);
+      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
     }
-    
+
     /* Link style buttons */
     .btn-link {
       background: none;
       border: none;
-      color: var(--navigator-green);
+      color: var(--navigator-orange);
       box-shadow: none;
       padding: 0.5rem 0.75rem;
       text-decoration: underline;
       text-decoration-color: transparent;
       transition: text-decoration-color 0.2s;
     }
-    
+
     .btn-link:hover {
-      background: rgba(0, 107, 84, 0.05);
-      text-decoration-color: var(--navigator-green);
+      background: rgba(255, 107, 53, 0.05);
+      text-decoration-color: var(--navigator-orange);
       transform: none;
       box-shadow: none;
     }
-    
+
     /* Disabled state */
     .btn:disabled {
       opacity: 0.6;
@@ -265,7 +282,7 @@
       transform: none !important;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }
-    
+
     /* Button groups */
     .btn-group {
       display: inline-flex;
@@ -273,24 +290,24 @@
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    
+
     .btn-group .btn {
       border-radius: 0;
       border-right: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: none;
     }
-    
+
     .btn-group .btn:first-child {
       border-top-left-radius: 0.5rem;
       border-bottom-left-radius: 0.5rem;
     }
-    
+
     .btn-group .btn:last-child {
       border-top-right-radius: 0.5rem;
       border-bottom-right-radius: 0.5rem;
       border-right: none;
     }
-    
+
     /* Floating Action Button */
     .btn-fab {
       position: fixed;
@@ -300,25 +317,25 @@
       width: 3.5rem;
       height: 3.5rem;
       z-index: 1000;
-      box-shadow: 0 4px 16px rgba(0, 107, 84, 0.3);
+      box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
     }
-    
+
     .btn-fab:hover {
-      box-shadow: 0 6px 20px rgba(0, 107, 84, 0.4);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
     }
-    
+
     /* Table action buttons */
     .table-actions {
       display: flex;
       gap: 0.5rem;
       align-items: center;
     }
-    
+
     .table-actions .btn {
       padding: 0.375rem 0.75rem;
       font-size: 0.75rem;
     }
-    
+
     /* Navigation button override */
     .nav-btn {
       background: rgba(255, 255, 255, 0.1) !important;
@@ -330,7 +347,7 @@
       transition: all 0.2s ease !important;
       text-decoration: none !important;
     }
-    
+
     .nav-btn:hover {
       background: rgba(255, 255, 255, 0.2) !important;
       border-color: rgba(255, 255, 255, 0.3) !important;
@@ -338,23 +355,25 @@
       transform: translateY(-1px) !important;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     }
-    
+
     /* Make container full height */
-    html, body {
+    html,
+    body {
       height: 100%;
     }
-    
+
     .page-wrapper {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
-    
+
     .content-wrapper {
       flex: 1;
     }
   </style>
 </head>
+
 <body>
   <div class="page-wrapper">
     <div class="content-wrapper">
@@ -368,19 +387,9 @@
           </ul>
           <ul>
             <li><a href="/">Dashboard</a></li>
-            <li><a href="/admin/">Admin</a></li>
-            <li>
-              <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
-                {% csrf_token %}
-                <button type="submit" class="nav-btn">
-                  <span style="margin-right: 0.5rem;">🔄</span>
-                  Scrape Now
-                </button>
-              </form>
-            </li>
           </ul>
         </nav>
-        
+
         <!-- Django Messages -->
         {% if messages %}
         <div style="margin-bottom: 1rem;">
@@ -395,15 +404,17 @@
           {% endfor %}
         </div>
         {% endif %}
-        
+
         {% block content %}{% endblock %}
       </main>
     </div>
     <footer class="footer">
       <div class="container">
-        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu" target="_blank">www.marsshot.eu</a>
+        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
+          target="_blank">www.marsshot.eu</a>
       </div>
     </footer>
   </div>
 </body>
+
 </html>
