@@ -1,6 +1,6 @@
-
 {% extends "base.html" %}
 {% block content %}
+<div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
   <div>
     <h2 style="margin: 0 0 0.5rem 0;">{{ sku.code }}</h2>
@@ -25,12 +25,23 @@
   </div>
 </div>
 
-<canvas id="priceChart"></canvas>
+<!-- wrapper com altura fixa -->
+<div style="width:100%; height:300px; margin-bottom:2rem;">
+  <canvas id="priceChart" style="width:100%; height:100%;"></canvas>
+</div>
 
 <script>
 const ctx = document.getElementById('priceChart');
-const labels = [{% for p in price_points %}"{{ p.timestamp|date:'Y-m-d H:i' }}",{% endfor %}];
-const prices = [{% for p in price_points %}{{ p.promo_price|default:p.price|default:'null' }},{% endfor %}];
+const labels = [
+  {% for p in price_points %}
+    "{{ p.timestamp|date:'Y-m-d H:i' }}"{% if not forloop.last %}, {% endif %}
+  {% endfor %}
+];
+const prices = [
+  {% for p in price_points %}
+    {{ p.promo_price|default:p.price|default:"null" }}{% if not forloop.last %}, {% endif %}
+  {% endfor %}
+];
 
 new Chart(ctx, {
   type: 'line',
@@ -43,6 +54,7 @@ new Chart(ctx, {
   },
   options: {
     responsive: true,
+    maintainAspectRatio: false, // respeita altura da div
     scales: {
       y: { beginAtZero: false }
     }
@@ -51,26 +63,30 @@ new Chart(ctx, {
 </script>
 
 <h3>Histórico</h3>
-<table>
-  <thead>
-    <tr>
-      <th>Data</th>
-      <th>Retalhista</th>
-      <th>Preço</th>
-      <th>Promo</th>
-      <th>Nota</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for p in price_points %}
-    <tr>
-      <td>{{ p.timestamp }}</td>
-      <td>{{ p.sku_listing.retailer.name }}</td>
-      <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
-      <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
-      <td class="muted">{{ p.raw_snapshot|truncatechars:120 }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+<div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+  <table style="background-color: var(--navigator-white) !important;">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Retalhista</th>
+        <th>Preço</th>
+        <th>Promo</th>
+        <th>Nota</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in price_points %}
+      <tr style="background-color: var(--navigator-white) !important;">
+        <td>{{ p.timestamp }}</td>
+        <td>{{ p.sku_listing.retailer.name }}</td>
+        <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="muted">{{ p.raw_snapshot|truncatechars:120 }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+
 {% endblock %}

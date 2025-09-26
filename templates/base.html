@@ -18,27 +18,41 @@
       --navigator-grey: #6b7280;
     }
 
-    /* Navigator branding colors */
     body {
       background-color: var(--navigator-white);
       color: var(--navigator-black);
     }
 
     nav {
-      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral)) !important;
-      padding: 1rem 0;
+      background: var(--navigator-orange);
       margin-bottom: 2rem;
       border-radius: 0.5rem;
     }
 
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      /* Espaço lateral */
+    }
+
+    nav ul {
+      display: flex;
+      gap: 1rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
     nav ul li strong,
     nav ul li a {
-      color: var(--navigator-white) !important;
+      color: var(--navigator-white);
       text-decoration: none;
     }
 
     nav ul li a:hover {
-      color: #f0f0f0 !important;
+      color: #f0f0f0;
     }
 
     .navigator-logo {
@@ -90,11 +104,12 @@
     }
 
     .footer {
-      margin-top: 3rem;
+      margin-top: 0;
       padding: 2rem 0 1rem 0;
       border-top: 2px solid var(--navigator-orange);
+      background-color: #2c2c2c;
+      color: var(--navigator-white);
       text-align: center;
-      color: var(--navigator-grey);
       font-size: 0.9rem;
     }
 
@@ -107,9 +122,7 @@
       text-decoration: underline;
     }
 
-    /* Modern Button System - Inspired by Bizneo & Professional HR Software */
-
-    /* Base button styles */
+    /* Botões (igual ao teu anterior, mantive tudo) */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -145,7 +158,6 @@
       outline-offset: 2px;
     }
 
-    /* Primary button - Main actions */
     .btn-primary {
       background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral));
       color: var(--navigator-white);
@@ -158,7 +170,6 @@
       border-color: var(--navigator-orange-dark);
     }
 
-    /* Secondary button - Secondary actions */
     .btn-secondary {
       background: var(--navigator-white);
       color: var(--navigator-orange);
@@ -170,7 +181,6 @@
       color: var(--navigator-white);
     }
 
-    /* Info button - Informational actions */
     .btn-info {
       background: linear-gradient(135deg, #3b82f6, #1d4ed8);
       color: var(--navigator-white);
@@ -182,7 +192,6 @@
       color: var(--navigator-white);
     }
 
-    /* Success button - Positive actions */
     .btn-success {
       background: linear-gradient(135deg, #10b981, #059669);
       color: var(--navigator-white);
@@ -194,7 +203,6 @@
       color: var(--navigator-white);
     }
 
-    /* Warning button - Caution actions */
     .btn-warning {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       color: var(--navigator-white);
@@ -206,7 +214,6 @@
       color: var(--navigator-white);
     }
 
-    /* Danger button - Destructive actions */
     .btn-danger {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: var(--navigator-white);
@@ -218,7 +225,6 @@
       color: var(--navigator-white);
     }
 
-    /* Button sizes */
     .btn-sm {
       padding: 0.5rem 1rem;
       font-size: 0.75rem;
@@ -231,7 +237,6 @@
       border-radius: 0.75rem;
     }
 
-    /* Icon buttons */
     .btn-icon {
       padding: 0.75rem;
       border-radius: 50%;
@@ -245,7 +250,6 @@
       height: 2rem;
     }
 
-    /* Ghost/outline buttons */
     .btn-ghost {
       background: transparent;
       box-shadow: none;
@@ -259,7 +263,6 @@
       box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
     }
 
-    /* Link style buttons */
     .btn-link {
       background: none;
       border: none;
@@ -278,15 +281,13 @@
       box-shadow: none;
     }
 
-    /* Disabled state */
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
-      transform: none !important;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+      transform: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* Button groups */
     .btn-group {
       display: inline-flex;
       border-radius: 0.5rem;
@@ -311,7 +312,6 @@
       border-right: none;
     }
 
-    /* Floating Action Button */
     .btn-fab {
       position: fixed;
       bottom: 2rem;
@@ -327,7 +327,6 @@
       box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
     }
 
-    /* Table action buttons */
     .table-actions {
       display: flex;
       gap: 0.5rem;
@@ -339,40 +338,44 @@
       font-size: 0.75rem;
     }
 
-    /* Navigation button override */
-    .nav-btn {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      color: var(--navigator-white) !important;
-      padding: 0.5rem 1rem !important;
-      border-radius: 0.375rem !important;
-      font-weight: 500 !important;
-      transition: all 0.2s ease !important;
-      text-decoration: none !important;
-    }
-
-    .nav-btn:hover {
-      background: rgba(255, 255, 255, 0.2) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
-      color: var(--navigator-white) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-    }
-
-    /* Make container full height */
-    html,
-    body {
+    /* Layout structure for white content area and dark footer */
+    html, body {
       height: 100%;
+      margin: 0;
+      padding: 0;
     }
-
+    
     .page-wrapper {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      background-color: var(--navigator-white);
     }
-
+    
     .content-wrapper {
       flex: 1;
+      background-color: var(--navigator-white);
+      padding: 0 1rem 2rem 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    /* Ensure content containers have white backgrounds */
+    .container {
+      background-color: var(--navigator-white);
+      padding: 0 1rem;
+    }
+    
+    /* Override Pico table styling to ensure white backgrounds */
+    table {
+      background-color: var(--navigator-white) !important;
+    }
+    
+    table tr {
+      background-color: var(--navigator-white) !important;
+    }
+    
+    table tr:nth-child(even) {
+      background-color: #f8f9fa !important;
     }
   </style>
 </head>
@@ -382,17 +385,29 @@
     <div class="content-wrapper">
       <main class="container">
         <nav>
-          <ul>
-            <li>
-              <img src="/static/navigator-logo.png" alt="Navigator Logo" class="navigator-logo">
-              <strong>Navigator — Market Intel (MVP)</strong>
-            </li>
-          </ul>
-          <ul>
-            <li><a href="/">Dashboard</a></li>
-          </ul>
+          <div class="nav-inner">
+            <ul>
+              <li>
+                <img src="/static/navigator-logo.png" alt="Navigator Logo" class="navigator-logo">
+                <strong>Navigator — Market Intel (MVP)</strong>
+              </li>
+            </ul>
+            <ul>
+              <li><a href="/">Dashboard</a></li>
+              <li><a href="/admin/">Admin</a></li>
+              <li>
+                <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="nav-btn">
+                    <span style="margin-right: 0.5rem;">🔄</span>
+                    Scrape Now
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
         </nav>
-
+        
         <!-- Django Messages -->
         {% if messages %}
         <div style="margin-bottom: 1rem;">
@@ -407,17 +422,18 @@
           {% endfor %}
         </div>
         {% endif %}
-
+        
         {% block content %}{% endblock %}
       </main>
     </div>
     <footer class="footer">
       <div class="container">
-        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
-          target="_blank">www.marsshot.eu</a>
+        Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu" target="_blank">www.marsshot.eu</a>
       </div>
     </footer>
   </div>
+
+
 </body>
 
 </html>

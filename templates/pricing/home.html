@@ -3,54 +3,92 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
   <h2 style="margin: 0;">SKUs — Últimos preços</h2>
   <div style="display: flex; gap: 1rem;">
-    <a href="/admin/" class="btn btn-secondary btn-sm">
-      <span style="margin-right: 0.5rem;">⚙️</span>
-      Configurar
-    </a>
+
+    <form method="post" action="/admin/" target="_blank" style="display: inline; margin: 0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary btn-sm" style="min-width:160px; text-align:center;">
+        <span style="margin-right: 0.5rem;">⚙️</span>
+        Configurar
+      </button>
+    </form>
+
     <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
       {% csrf_token %}
-      <button type="submit" class="btn btn-primary btn-sm">
+      <button type="submit" class="btn btn-primary btn-sm" style="min-width:160px; text-align:center;">
         <span style="margin-right: 0.5rem;">🔄</span>
-        Atualizar preços
+        Scrape Now
       </button>
     </form>
   </div>
 </div>
-<table>
-  <thead>
-    <tr>
-      <th>SKU</th>
-      <th>Nome</th>
-      <th>Último preço</th>
-      <th>Promo</th>
-      <th>Moeda</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for sku in skus %}
-    {% with latest_pp=latest%}
-    <tr>
-      <td>{{ sku.code }}</td>
-      <td>{{ sku.name }}</td>
-      <td>{% if latest_pp and latest_pp.price %}{{ latest_pp.price }}{% else %}<span class="muted">—</span>{% endif %}
-      </td>
-      <td>{% if latest_pp and latest_pp.promo_price %}{{ latest_pp.promo_price }} ({{ latest_pp.promo_text }}){% else
-        %}<span class="muted">—</span>{% endif %}</td>
-      <td>{% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}</td>
-      <td>
-        <div class="table-actions">
-          <a href="{% url 'sku_detail' sku.id %}" class="btn btn-info btn-sm">
-            <span style="margin-right: 0.25rem;">📊</span>
-            Ver detalhes
-          </a>
-        </div>
-      </td>
-    </tr>
-    {% endwith %}
-    {% endfor %}
-  </tbody>
-</table>
+
+<div style="max-height:300px; overflow-y:auto; display:block; scrollbar-width:none; -ms-overflow-style:none;">
+  <table style="width:100%; border-collapse:collapse;">
+    <thead style="position:sticky; top:0; background:#f97316; z-index:2; color:#fff;">
+      <tr>
+        <th style="padding:8px 12px; border:1px solid #ddd;">SKU</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">Nome</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">Último preço</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">Promo</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">Moeda</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;"></th>
+      </tr>
+    </thead>
+    <tbody style="background-color:#ffffff !important; color:#000000 !important;">
+      {% for sku in skus %}
+      {% with latest_pp=latest %}
+      <tr>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {{ sku.code }}
+        </td>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {{ sku.name }}
+        </td>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% if latest_pp and latest_pp.price %}
+          {{ latest_pp.price }}
+          {% else %}
+          <span style="color:#999;">—</span>
+          {% endif %}
+        </td>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% if latest_pp and latest_pp.promo_price %}
+          {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
+          {% else %}
+          <span style="color:#999;">—</span>
+          {% endif %}
+        </td>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}
+        </td>
+        <td
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          <div class="table-actions">
+            <a href="{% url 'sku_detail' sku.id %}"
+              style="background-color:#000000 !important; color:#ffffff !important; padding:4px 8px; text-decoration:none; border-radius:4px; font-size:0.875rem;">
+              <span style="margin-right: 0.25rem;">📊</span>
+              Ver detalhes
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% endwith %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- esconder scrollbar no Chrome/Webkit -->
+<style>
+  div[style*="overflow-y:auto"]::-webkit-scrollbar {
+    display: none;
+  }
+</style>
 
 <div
   style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; border-left: 4px solid var(--navigator-orange);">

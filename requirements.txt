@@ -10,3 +10,6 @@ fake-useragent
 playwright
 requests-html
 selenium
+beautifulsoup4
+lxml
+playwright
