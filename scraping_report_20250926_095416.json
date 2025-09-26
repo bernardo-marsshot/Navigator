@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-09-26 09:52:00",
+  "total_listings": 5,
+  "scraped_products": [],
+  "failed_scrapes": [
+    {
+      "url": "https://www.tesco.com/groceries/en-GB/products/281055580",
+      "timestamp": "2025-09-26 09:52:32",
+      "retailer": "Tesco",
+      "status": "partial_success",
+      "scraping_method": "fallback_search_failed",
+      "note": "Individual page blocked, search fallback did not find this specific product"
+    },
+    {
+      "url": "https://www.tesco.com/groceries/en-GB/products/312214351",
+      "timestamp": "2025-09-26 09:52:58",
+      "retailer": "Tesco",
+      "status": "partial_success",
+      "scraping_method": "fallback_search_failed",
+      "note": "Individual page blocked, search fallback did not find this specific product"
+    },
+    {
+      "url": "https://www.tesco.com/groceries/en-GB/products/285811261",
+      "timestamp": "2025-09-26 09:53:24",
+      "retailer": "Tesco",
+      "status": "partial_success",
+      "scraping_method": "fallback_search_failed",
+      "note": "Individual page blocked, search fallback did not find this specific product"
+    },
+    {
+      "url": "https://www.tesco.com/groceries/en-GB/products/316547814",
+      "timestamp": "2025-09-26 09:53:50",
+      "retailer": "Tesco",
+      "status": "partial_success",
+      "scraping_method": "fallback_search_failed",
+      "note": "Individual page blocked, search fallback did not find this specific product"
+    },
+    {
+      "url": "https://www.tesco.com/groceries/en-GB/products/321681629",
+      "timestamp": "2025-09-26 09:54:16",
+      "retailer": "Tesco",
+      "status": "partial_success",
+      "scraping_method": "fallback_search_failed",
+      "note": "Individual page blocked, search fallback did not find this specific product"
+    }
+  ],
+  "summary": {
+    "successful_scrapes": 0,
+    "failed_scrapes": 5,
+    "success_rate": "0.0%",
+    "new_price_points_created": 0
+  },
+  "new_price_points": []
+}

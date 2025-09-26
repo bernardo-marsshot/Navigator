@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-09-26 09:54:36",
+  "total_listings": 5,
+  "scraped_products": [
+    {
+      "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper tissue&page=1",
+      "timestamp": "2025-09-26 09:54:37",
+      "retailer": "Tesco",
+      "search_term": "paper tissue",
+      "title": "Tesco Luxury Soft White Toilet Tissue 4 Rolls",
+      "price": "1.55",
+      "currency": "£",
+      "price_text": "£1.55",
+      "url": "https://www.tesco.com/groceries/en-GB/products/281055580",
+      "scraping_method": "search_fallback_comprehensive",
+      "original_url": "https://www.tesco.com/groceries/en-GB/products/281055580",
+      "status": "success"
+    },
+    {
+      "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper tissue&page=1",
+      "timestamp": "2025-09-26 09:54:37",
+      "retailer": "Tesco",
+      "search_term": "paper tissue",
+      "title": "Tesco Luxury Soft White Toilet Tissue 6 Long Rolls",
+      "price": "3.15",
+      "currency": "£",
+      "price_text": "£3.15",
+      "url": "https://www.tesco.com/groceries/en-GB/products/312214351",
+      "scraping_method": "search_fallback_comprehensive",
+      "original_url": "https://www.tesco.com/groceries/en-GB/products/312214351",
+      "status": "success"
+    },
+    {
+      "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper tissue&page=1",
+      "timestamp": "2025-09-26 09:54:37",
+      "retailer": "Tesco",
+      "search_term": "paper tissue",
+      "title": "Tesco Luxury Soft Cube Tissues 56S",
+      "price": "0.55",
+      "currency": "£",
+      "price_text": "£0.55",
+      "url": "https://www.tesco.com/groceries/en-GB/products/285811261",
+      "scraping_method": "search_fallback_comprehensive",
+      "original_url": "https://www.tesco.com/groceries/en-GB/products/285811261",
+      "status": "success"
+    },
+    {
+      "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper tissue&page=1",
+      "timestamp": "2025-09-26 09:54:37",
+      "retailer": "Tesco",
+      "search_term": "paper tissue",
+      "title": "Tesco Luxury Soft Flushable Moist Toilet Tissues - Coconut Oil 60 Pack",
+      "price": "0.75",
+      "currency": "£",
+      "price_text": "£0.75",
+      "url": "https://www.tesco.com/groceries/en-GB/products/316547814",
+      "scraping_method": "search_fallback_comprehensive",
+      "original_url": "https://www.tesco.com/groceries/en-GB/products/316547814",
+      "status": "success"
+    },
+    {
+      "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper tissue&page=1",
+      "timestamp": "2025-09-26 09:54:37",
+      "retailer": "Tesco",
+      "search_term": "paper tissue",
+      "title": "Springforce Toilet Tissue 8 White Longer Rolls",
+      "price": "2.52",
+      "currency": "£",
+      "price_text": "£2.52",
+      "url": "https://www.tesco.com/groceries/en-GB/products/321681629",
+      "scraping_method": "search_fallback_comprehensive",
+      "original_url": "https://www.tesco.com/groceries/en-GB/products/321681629",
+      "status": "success"
+    }
+  ],
+  "failed_scrapes": [],
+  "summary": {
+    "successful_scrapes": 5,
+    "failed_scrapes": 0,
+    "success_rate": "100.0%",
+    "new_price_points_created": 5
+  },
+  "new_price_points": [
+    {
+      "sku_code": "TESCO-281055580",
+      "retailer": "Tesco",
+      "price": "1.55",
+      "timestamp": "2025-09-26 09:54:37"
+    },
+    {
+      "sku_code": "TESCO-312214351",
+      "retailer": "Tesco",
+      "price": "3.15",
+      "timestamp": "2025-09-26 09:54:37"
+    },
+    {
+      "sku_code": "TESCO-285811261",
+      "retailer": "Tesco",
+      "price": "0.55",
+      "timestamp": "2025-09-26 09:54:37"
+    },
+    {
+      "sku_code": "TESCO-316547814",
+      "retailer": "Tesco",
+      "price": "0.75",
+      "timestamp": "2025-09-26 09:54:37"
+    },
+    {
+      "sku_code": "TESCO-321681629",
+      "retailer": "Tesco",
+      "price": "2.52",
+      "timestamp": "2025-09-26 09:54:37"
+    }
+  ]
+}

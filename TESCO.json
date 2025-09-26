@@ -1,0 +1,57 @@
+[
+  {
+    "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper%20tissue",
+    "timestamp": "2025-09-26 09:54:30",
+    "retailer": "Tesco",
+    "search_term": "paper tissue",
+    "title": "Tesco Luxury Soft White Toilet Tissue 6 Long Rolls",
+    "price": "3.15",
+    "currency": "£",
+    "price_text": "£3.15",
+    "url": "https://www.tesco.com/groceries/en-GB/products/312214351"
+  },
+  {
+    "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper%20tissue",
+    "timestamp": "2025-09-26 09:54:30",
+    "retailer": "Tesco",
+    "search_term": "paper tissue",
+    "title": "Tesco Luxury Soft White Toilet Tissue 4 Rolls",
+    "price": "1.55",
+    "currency": "£",
+    "price_text": "£1.55",
+    "url": "https://www.tesco.com/groceries/en-GB/products/281055580"
+  },
+  {
+    "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper%20tissue",
+    "timestamp": "2025-09-26 09:54:30",
+    "retailer": "Tesco",
+    "search_term": "paper tissue",
+    "title": "Tesco Luxury Soft Cube Tissues 56S",
+    "price": "0.55",
+    "currency": "£",
+    "price_text": "£0.55",
+    "url": "https://www.tesco.com/groceries/en-GB/products/285811261"
+  },
+  {
+    "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper%20tissue",
+    "timestamp": "2025-09-26 09:54:30",
+    "retailer": "Tesco",
+    "search_term": "paper tissue",
+    "title": "Tesco Luxury Soft Flushable Moist Toilet Tissues - Coconut Oil 60 Pack",
+    "price": "0.75",
+    "currency": "£",
+    "price_text": "£0.75",
+    "url": "https://www.tesco.com/groceries/en-GB/products/316547814"
+  },
+  {
+    "search_url": "https://www.tesco.com/groceries/en-GB/search?query=paper%20tissue",
+    "timestamp": "2025-09-26 09:54:30",
+    "retailer": "Tesco",
+    "search_term": "paper tissue",
+    "title": "Springforce Toilet Tissue 8 White Longer Rolls",
+    "price": "2.52",
+    "currency": "£",
+    "price_text": "£2.52",
+    "url": "https://www.tesco.com/groceries/en-GB/products/321681629"
+  }
+]
