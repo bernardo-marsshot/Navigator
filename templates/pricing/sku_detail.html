@@ -39,10 +39,28 @@ const translations = {
   time: '{% trans "Time" %}',
   priceEvolution: '{% trans "Price Evolution by Retailer" %}'
 };
+
+// Utility: normalize numeric strings for pt locale (fix comma/dot issue)
+function normalizeNumber(value, lang) {
+  if (value === null || value === undefined || value === 'null') {
+    return null;
+  }
+  
+  let strValue = String(value);
+  
+  // If pt locale and has comma, replace with dot for parsing
+  if (lang === 'pt' && strValue.includes(',')) {
+    strValue = strValue.replace(',', '.');
+  }
+  
+  const parsed = Number(strValue);
+  return isNaN(parsed) ? null : parsed;
+}
 </script>
 
 <script>
 const ctx = document.getElementById('priceChart');
+let chartInstance = null; // Store chart instance for destroy/recreate
 
 // Group data by retailer
 const retailerData = {};
@@ -51,7 +69,7 @@ const allLabels = new Set();
 {% for p in price_points %}
 const retailer_{{ forloop.counter }} = "{{ p.sku_listing.retailer.name }}";
 const timestamp_{{ forloop.counter }} = "{{ p.timestamp|date:'Y-m-d H:i' }}";
-const price_{{ forloop.counter }} = {{ p.promo_price|default:p.price|default:"null" }};
+const price_{{ forloop.counter }} = normalizeNumber("{{ p.promo_price|default:p.price|default:"null" }}", window.currentLang || 'pt');
 
 if (!retailerData[retailer_{{ forloop.counter }}]) {
   retailerData[retailer_{{ forloop.counter }}] = {};
@@ -96,46 +114,97 @@ for (const retailerName in retailerData) {
   colorIndex++;
 }
 
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: labels,
-    datasets: datasets
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: { 
-        beginAtZero: false,
-        title: {
-          display: true,
-          text: translations.price + ' (£)'
+// Create chart with safe destroy/recreate
+function createChart() {
+  // Destroy existing chart if it exists
+  if (chartInstance) {
+    chartInstance.destroy();
+    chartInstance = null;
+  }
+  
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { 
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: translations.price + ' (£)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: translations.time
+          }
         }
       },
-      x: {
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        },
         title: {
           display: true,
-          text: translations.time
+          text: translations.priceEvolution
         }
-      }
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top'
       },
-      title: {
-        display: true,
-        text: translations.priceEvolution
+      interaction: {
+        intersect: false,
+        mode: 'index'
       }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index'
+    }
+  });
+}
+
+// Initialize chart
+createChart();
+
+// Global function for language change (called from base.html)
+window.rebuildChart = function(newLang) {
+  // Re-normalize all data with new language
+  for (const retailerName in retailerData) {
+    for (const timestamp in retailerData[retailerName]) {
+      const originalValue = retailerData[retailerName][timestamp];
+      if (originalValue !== null) {
+        retailerData[retailerName][timestamp] = normalizeNumber(originalValue, newLang);
+      }
     }
   }
-});
+  
+  // Recreate datasets
+  const newDatasets = [];
+  let colorIndex = 0;
+  
+  for (const retailerName in retailerData) {
+    const data = labels.map(label => retailerData[retailerName][label] || null);
+    
+    newDatasets.push({
+      label: `${retailerName} (£)`,
+      data: data,
+      borderColor: colors[colorIndex % colors.length],
+      backgroundColor: colors[colorIndex % colors.length] + '20',
+      fill: false,
+      tension: 0.1,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    });
+    
+    colorIndex++;
+  }
+  
+  // Update datasets and recreate chart
+  datasets.length = 0;
+  datasets.push(...newDatasets);
+  createChart();
+};
 </script>
 
 <h3>{% trans "History" %}</h3>
