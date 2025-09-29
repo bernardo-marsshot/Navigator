@@ -1,0 +1,139 @@
+PROMPT PARA REPLIT — TRADUZIR PROJETO (PT ⇄ EN) E CONFIGURAR I18N
+
+Variáveis (podes editar):
+
+SOURCE_LANG: pt
+
+TARGET_LANG: en (usa pt para voltar a português)
+
+PROJECT_TYPE: auto (auto-detectar entre: Django, Next.js/React, Vue, Node/Express, Flutter, plain HTML/JS, etc.)
+
+I18N_STRATEGY:
+
+para Web/JS/TS: i18next (com react-i18next se React/Next)
+
+para Django: django-i18n (gettext, makemessages, compilemessages)
+
+para Flutter: intl + arb (Flutter gen-l10n)
+
+Objetivo
+
+Detetar stack do projeto e configurar i18n adequado.
+
+Extrair todas as strings “hardcoded” (UI, labels, mensagens, validações, títulos, placeholders) para ficheiros de tradução.
+
+Gerar/atualizar catálogos nas pastas locales/ (JS) ou locale/ (Django) / lib/l10n/ (Flutter).
+
+Traduzir automaticamente de ${SOURCE_LANG} para ${TARGET_LANG}.
+
+Substituir no código por t('chave')/gettext('…')/S.of(context).… mantendo variáveis, pluralizações e formatação.
+
+Criar toggle de idioma (PT/EN) no UI e persistir escolha (querystring, cookie ou localStorage) sem quebrar rotas/SEO.
+
+Testes rápidos para garantir que nada quebra (build, rotas, forms e componentes críticos).
+
+Regras e Qualidade
+
+Não traduzir nomes próprios, chaves técnicas, IDs, enums, caminhos de API, nem conteúdo de log.
+
+Preservar placeholders e variáveis (ex.: {name}, %s, ${count}), pluralização e género quando o framework suportar.
+
+Naming das chaves: feature.section.context.short_slug (ex.: dashboard.cards.sales_title).
+
+Não duplicar chaves. Se encontrares duplicados, consolidar.
+
+Cuidado com HTML/JSX: não partir tags, manter aria-label/alt traduzidos.
+
+Datas/números: usar formatadores do framework i18n (ex.: formatNumber, formatDate).
+
+SEO (Next/Django): traduzir <title>, meta description, og:title, og:description.
+
+Fallback: se faltar tradução, cair para ${SOURCE_LANG} e emitir aviso na consola com a chave em falta.
+
+Relatório final (obrigatório): lista de ficheiros alterados, nº de strings extraídas, chaves criadas/alteradas, avisos.
+
+Passos (executa todos, sem pedir confirmação)
+
+Auto-detetar stack e confirmar plano (em 3-5 linhas) antes de alterar ficheiros.
+
+Instalar dependências i18n adequadas ao stack.
+
+Criar estrutura de catálogos:
+
+React/Next/Node/Vue: /locales/{pt,en}/common.json (ou por domínio); setup do provider de i18n na entry root.
+
+Django: ativar LocaleMiddleware, LANGUAGE_CODE, LANGUAGES = [('pt','Português'),('en','English')]; gerar locale/{pt,en}/LC_MESSAGES/django.po.
+
+Flutter: lib/l10n/ com app_en.arb e app_pt.arb, atualizar pubspec.yaml e MaterialApp com localizationsDelegates.
+
+Varredura do código (src/, app/, templates/, lib/, pages/, components/, templates/*.html, *.dart, *.py, *.ts(x), *.js(x)) e extração automática de strings.
+
+Gerar chaves e preencher catálogos em ${SOURCE_LANG}; criar versão ${TARGET_LANG} com tradução automática de alta qualidade.
+
+Refactor: substituir literais por chamadas i18n, mantendo interpolação/pluralização.
+
+Adicionar seletor de idioma visível (header/footer) que alterna PT/EN e persiste escolha.
+
+SEO/Meta: aplicar tradução a títulos/meta e (se Next) gerar alternates por locale.
+
+Build & Testes rápidos: compilar, correr, navegar páginas principais e submeter 1 formulário de exemplo.
+
+Relatório final (markdown no root I18N_REPORT.md) com:
+
+Stack detetado, libs usadas e porque
+
+Como alternar idioma
+
+Ficheiros alterados e catálogo de chaves por área
+
+Itens não traduzidos (e porquê)
+
+Próximos passos recomendados
+
+Especificidades por Stack
+React / Next.js / Node
+
+Instalar: i18next, react-i18next (se React), i18next-browser-languagedetector, i18next-http-backend (se necessário).
+
+Criar i18n.ts com inicialização, fallback e detetor (query/cookie/localStorage).
+
+Wrap da app com I18nextProvider/appWithTranslation.
+
+Em SSR (Next App Router), usar async getDictionary(locale) e colocation de dicionários quando apropriado.
+
+Atualizar links e rotas para incluir locale quando fizer sentido.
+
+Django
+
+Ativar USE_I18N=True, LocaleMiddleware, LANGUAGES=[('pt','Português'),('en','English')].
+
+Marcar strings com _('texto')/gettext.
+
+Correr python manage.py makemessages -l pt -l en e compilemessages.
+
+Adicionar seletor de idioma e set_language view.
+
+Flutter
+
+Ativar flutter_localizations, intl.
+
+Gerar .arb e S.of(context) nas views.
+
+Troca de locale no MaterialApp com dropdown no AppBar.
+
+O que NÃO deves traduzir
+
+Chaves/IDs técnicos, nomes de classes, rotas de API, termos de negócio que sejam marcas.
+
+Conteúdo dentro de ficheiros binários, imagens, PDFs. (Lista-os no relatório e propõe abordagem manual.)
+
+Entregáveis
+
+Código refatorado com i18n implementado e toggle PT/EN funcional.
+
+Pastas de tradução (locales/, locale/ ou lib/l10n/) completas.
+
+I18N_REPORT.md com tudo o que foi feito e TODOs.
+
+Executa agora com: ${SOURCE_LANG} → ${TARGET_LANG}.
+Quando terminar, repete os passos para ${SOURCE_LANG} ← ${TARGET_LANG} se eu mudar a variável TARGET_LANG para pt.
