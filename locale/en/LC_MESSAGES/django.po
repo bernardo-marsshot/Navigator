@@ -1,0 +1,97 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Navigator UK Market Intelligence\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-29 15:23+0000\n"
+"PO-Revision-Date: 2025-09-29 15:23+0000\n"
+"Last-Translator: Navigator Team\n"
+"Language-Team: English <en@navigator.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: templates/base.html:8
+msgid "Navigator UK Market Intelligence (MVP)"
+msgstr "Navigator UK Market Intelligence (MVP)"
+
+#: templates/base.html:425
+msgid "Prototype developed by"
+msgstr "Prototype developed by"
+
+#: templates/pricing/home.html:5
+msgid "SKUs — Latest Prices"
+msgstr "SKUs — Latest Prices"
+
+#: templates/pricing/home.html:12
+msgid "Configure"
+msgstr "Configure"
+
+#: templates/pricing/home.html:20
+msgid "Scrape Now"
+msgstr "Scrape Now"
+
+#: templates/pricing/home.html:30
+msgid "SKU"
+msgstr "SKU"
+
+#: templates/pricing/home.html:31
+msgid "Name"
+msgstr "Name"
+
+#: templates/pricing/home.html:32
+msgid "Latest Price"
+msgstr "Latest Price"
+
+#: templates/pricing/home.html:33 templates/pricing/sku_detail.html:139
+msgid "Promo"
+msgstr "Promo"
+
+#: templates/pricing/home.html:34
+msgid "Currency"
+msgstr "Currency"
+
+#: templates/pricing/home.html:76
+msgid "View Details"
+msgstr "View Details"
+
+#: templates/pricing/sku_detail.html:13
+msgid "Back"
+msgstr "Back"
+
+#: templates/pricing/sku_detail.html:17
+msgid "Print"
+msgstr "Print"
+
+#: templates/pricing/sku_detail.html:23
+msgid "Update Data"
+msgstr "Update Data"
+
+#: templates/pricing/sku_detail.html:120
+msgid "Price Evolution by Retailer"
+msgstr "Price Evolution by Retailer"
+
+#: templates/pricing/sku_detail.html:131
+msgid "History"
+msgstr "History"
+
+#: templates/pricing/sku_detail.html:136
+msgid "Date"
+msgstr "Date"
+
+#: templates/pricing/sku_detail.html:137
+msgid "Retailer"
+msgstr "Retailer"
+
+#: templates/pricing/sku_detail.html:138
+msgid "Price"
+msgstr "Price"
+
+#: templates/pricing/sku_detail.html:140
+msgid "Note"
+msgstr "Note"
