@@ -1,10 +1,11 @@
+{% load i18n %}
 <!doctype html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'pt' }}">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Navigator UK Market Intelligence (MVP)</title>
+  <title>{% trans "Navigator UK Market Intelligence (MVP)" %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -386,6 +387,19 @@
           <div class="nav-inner">
             <img src="/static/navigator-logo.png" alt="Navigator Logo" class="navigator-logo">
             <h2 class="nav-title">NaviPrice.AI</h2>
+            <!-- Language selector -->
+            <form action="{% url 'set_language' %}" method="post" style="display: inline; margin-left: 1rem;">
+              {% csrf_token %}
+              <select name="language" onchange="this.form.submit()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem;">
+                {% get_current_language as LANGUAGE_CODE %}
+                {% get_available_languages as LANGUAGES %}
+                {% for lang_code, lang_name in LANGUAGES %}
+                  <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %} style="color: black;">
+                    {% if lang_code == 'pt' %}🇵🇹 PT{% else %}🇬🇧 EN{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </form>
           </div>
         </nav>
 
@@ -408,7 +422,7 @@
       </main>
     </div>
     <footer class="footer">
-      Protótipo desenvolvido por <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
+      {% trans "Prototype developed by" %} <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
         target="_blank">www.marsshot.eu</a>
     </footer>
   </div>

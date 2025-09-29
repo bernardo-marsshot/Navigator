@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-  <h2 style="margin: 0;">SKUs — Últimos preços</h2>
+  <h2 style="margin: 0;">{% trans "SKUs — Latest Prices" %}</h2>
   <div style="display: flex; gap: 1rem;">
 
     <form method="post" action="/admin/" target="_blank" style="display: inline; margin: 0;">
       {% csrf_token %}
       <button type="submit" class="btn btn-primary btn-sm" style="min-width:160px; text-align:center;">
         <span style="margin-right: 0.5rem;">⚙️</span>
-        Configurar
+        {% trans "Configure" %}
       </button>
     </form>
 
@@ -16,7 +17,7 @@
       {% csrf_token %}
       <button type="submit" class="btn btn-primary btn-sm" style="min-width:160px; text-align:center;">
         <span style="margin-right: 0.5rem;">🔄</span>
-        Scrape Now
+        {% trans "Scrape Now" %}
       </button>
     </form>
   </div>
@@ -26,11 +27,11 @@
   <table style="width:100%; border-collapse:collapse;">
     <thead style="position:sticky; top:0; background:#f97316; z-index:2; color:#fff;">
       <tr>
-        <th style="padding:8px 12px; border:1px solid #ddd;">SKU</th>
-        <th style="padding:8px 12px; border:1px solid #ddd;">Nome</th>
-        <th style="padding:8px 12px; border:1px solid #ddd;">Último preço</th>
-        <th style="padding:8px 12px; border:1px solid #ddd;">Promo</th>
-        <th style="padding:8px 12px; border:1px solid #ddd;">Moeda</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">{% trans "SKU" %}</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">{% trans "Name" %}</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">{% trans "Latest Price" %}</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">{% trans "Promo" %}</th>
+        <th style="padding:8px 12px; border:1px solid #ddd;">{% trans "Currency" %}</th>
         <th style="padding:8px 12px; border:1px solid #ddd;"></th>
       </tr>
     </thead>
@@ -72,7 +73,7 @@
             <a href="{% url 'sku_detail' sku.id %}"
               style="background-color:#999999 !important; color:#ffffff !important; padding:4px 8px; text-decoration:none; border-radius:4px; font-size:0.875rem;">
               <span style="margin-right: 0.25rem;">📊</span>
-              Ver detalhes
+              {% trans "View Details" %}
             </a>
           </div>
         </td>
