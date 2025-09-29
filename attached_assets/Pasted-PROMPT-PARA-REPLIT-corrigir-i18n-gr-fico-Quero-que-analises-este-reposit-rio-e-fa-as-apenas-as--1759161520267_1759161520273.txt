@@ -1,0 +1,119 @@
+PROMPT PARA REPLIT (corrigir i18n + gráfico)
+
+Quero que analises este repositório e faças apenas as alterações mínimas necessárias para corrigir dois problemas:
+
+1) Toggle de idioma (EN/PT)
+
+Sintoma: quando mudo para inglês, a página recarrega como se tivesse ficado em inglês, mas o estado/labels nem sempre alinham; quando está em português, alguns componentes parecem não receber o locale logo no 1º render.
+
+Objetivo:
+
+Persistir o idioma escolhido (ex.: localStorage.lang = 'pt' | 'en').
+
+Aplicar o idioma antes do 1º render da app (evitar “flash” no idioma errado e re-render desnecessário).
+
+Garantir que todos os textos/labels e formatações dependentes do locale (datas, números, separadores) usam o idioma atual.
+
+Implementação mínima esperada:
+
+Se o projeto usar React:
+
+Criar um pequeno bootstrap que lê localStorage.lang antes de montar a app (ex.: num ficheiro i18n-boot.ts/i18n-boot.js ou no main.tsx/index.js antes do createRoot).
+
+Se houver react-i18next ou similar, inicializar i18n com o lng persistido e só então renderizar a app.
+
+Assegurar que o toggle (ex.: botão EN/PT) atualiza i18n.changeLanguage(...) e localStorage.lang, sem recarregar a página.
+
+Se for vanilla JS:
+
+Ler localStorage.lang logo no <head> (script inline mínimo) e setar um atributo ex.: document.documentElement.setAttribute('lang', storedLang || 'pt'), antes de carregar scripts de UI.
+
+Todos os módulos que formatam texto/datas/números devem ler o locale atual a partir de uma função central (ex.: getCurrentLang()).
+
+2) Gráfico não aparece em PT (Chart.js / similar)
+
+Sintoma: Em inglês o gráfico aparece; em português não renderiza (ou some).
+
+Possíveis causas comuns (corrigir todas que apliquem):
+
+Parsing de números com vírgula decimal (ex.: “1,23”) — o dataset vem como string com vírgula e o Chart.js espera ponto. Normalizar os dados: substituir vírgula por ponto ao converter para Number.
+
+Locale de data no eixo (time scale): garantir que a lib de data usada pelo Chart.js (ex.: date-fns, luxon, dayjs) está configurada para ‘pt’ quando o idioma é PT e que o adapter está instalado e importado corretamente.
+
+Re-inicialização do gráfico ao trocar idioma: ao mudar EN↔PT, destruir instâncias existentes (chart.destroy()) antes de criar de novo, para evitar referências antigas/erro silencioso.
+
+Strings de labels não traduzidas ou nulas em PT: garantir que todas as keys existem no ficheiro de traduções PT e que retornam string válida.
+
+Implementação mínima esperada (exemplo genérico):
+
+Criar um util: normalizeNumber(value, lang) que:
+
+se lang === 'pt', troca , por . antes de Number(value);
+
+devolve sempre number válido (ou null com fallback removido do dataset).
+
+No módulo do gráfico:
+
+Extrair lang atual de forma centralizada (ver ponto 1).
+
+Normalizar todos os datasets com normalizeNumber.
+
+Se houver troca de idioma, chamar uma função rebuildChart() que:
+
+faz destroy() do gráfico anterior se existir,
+
+re-cria a instância com labels traduzidas e adapter de datas no locale certo.
+
+Aceitação (checks automáticos simples)
+
+Implementa (ou atualiza) um pequeno teste/manual check:
+
+Carregar app com localStorage.lang = 'pt' → a UI e o gráfico aparecem em PT à primeira, sem refresh manual.
+
+Trocar para EN via botão → sem reload, o gráfico é destruído e recriado com labels/formatação EN.
+
+Voltar a PT → idem, gráfico aparece corretamente, sem erros na consola.
+
+Dados com vírgula (ex.: "12,5") não quebram o gráfico.
+
+Critérios de qualidade/eficiência
+
+Alterar o mínimo de ficheiros possível.
+
+Sem dependências pesadas novas. Se precisar mesmo de um adapter de datas para Chart.js, usar o mais leve e documentado.
+
+Sem regressões: manter design, CSS e comportamento atual.
+
+Comentários curtos nas linhas-chave explicando o porquê (i18n bootstrap, normalização de números, destroy/recreate do gráfico).
+
+Entregáveis
+
+Patch com:
+
+bootstrap de idioma (antes do 1º render),
+
+persistência (localStorage),
+
+fix do gráfico (normalização de números + destroy/recreate + locale adapter),
+
+chaves de tradução PT/EN completas para labels do gráfico.
+
+Pequeno README (secção “i18n & Charts”) com:
+
+como o idioma é aplicado,
+
+como os dados numéricos são normalizados,
+
+como o gráfico re-inicializa ao trocar idioma.
+
+Logs mínimos de debug desativáveis (ex.: DEBUG_I18N=false).
+
+Importante: Mantém os nomes de ficheiro/arquitetura atuais; se precisares de criar 1–2 utils (ex.: src/lib/i18nBoot.(js|ts) e src/lib/number.ts), coloca-os em local óbvio.
+
+Commits sugeridos (squasháveis):
+
+fix(i18n): apply stored lang before first render + persist toggle
+
+fix(chart): normalize numeric strings for pt locale + safe destroy/recreate
+
+docs: add i18n & chart behavior notes
