@@ -157,7 +157,19 @@ new Chart(ctx, {
         <td>{{ p.sku_listing.retailer.name }}</td>
         <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">{% trans "No data" %}</span>{% endif %}</td>
         <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">{% trans "No promo" %}</span>{% endif %}</td>
-        <td class="muted">{{ p.raw_snapshot|truncatechars:120 }}</td>
+        <td class="muted">
+          {% if p.raw_snapshot %}
+            {% if 'search_url' in p.raw_snapshot %}
+              <small>{% trans "Scraped from search" %}</small>
+            {% elif 'timestamp' in p.raw_snapshot %}
+              <small>{% trans "Auto-extracted" %}</small>
+            {% else %}
+              {{ p.raw_snapshot|truncatechars:60 }}
+            {% endif %}
+          {% else %}
+            <small>{% trans "No debug info" %}</small>
+          {% endif %}
+        </td>
       </tr>
     {% endfor %}
     </tbody>

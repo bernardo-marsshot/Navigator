@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Navigator UK Market Intelligence\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 15:45+0000\n"
+"POT-Creation-Date: 2025-09-29 15:48+0000\n"
 "PO-Revision-Date: 2025-09-29 15:23+0000\n"
 "Last-Translator: Navigator Team\n"
 "Language-Team: Portuguese <pt@navigator.com>\n"
@@ -124,6 +124,15 @@ msgstr "Preço"
 msgid "Time"
 msgstr "Tempo"
 
+msgid "Scraped from search"
+msgstr "Extraído por pesquisa"
+
+msgid "Auto-extracted"
+msgstr "Auto-extraído"
+
+msgid "No debug info"
+msgstr "Sem informação"
+
 #: templates/pricing/sku_detail.html:40
 msgid "Price Evolution by Retailer"
 msgstr "Evolução de Preços por Retalhista"
@@ -147,3 +156,15 @@ msgstr "Nota"
 #: templates/pricing/sku_detail.html:159
 msgid "No promo"
 msgstr "Sem promoção"
+
+#: templates/pricing/sku_detail.html:163
+msgid "Scraped from search"
+msgstr ""
+
+#: templates/pricing/sku_detail.html:165
+msgid "Auto-extracted"
+msgstr ""
+
+#: templates/pricing/sku_detail.html:170
+msgid "No debug info"
+msgstr ""
