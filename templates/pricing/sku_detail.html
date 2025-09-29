@@ -44,7 +44,7 @@ const translations = {
 <script>
 const ctx = document.getElementById('priceChart');
 
-// Agrupar dados por retalhista
+// Group data by retailer
 const retailerData = {};
 const allLabels = new Set();
 
@@ -60,10 +60,10 @@ retailerData[retailer_{{ forloop.counter }}][timestamp_{{ forloop.counter }}] = 
 allLabels.add(timestamp_{{ forloop.counter }});
 {% endfor %}
 
-// Converter labels para array ordenado
+// Convert labels to sorted array
 const labels = Array.from(allLabels).sort();
 
-// Cores para diferentes retalhistas
+// Colors for different retailers
 const colors = [
   '#FF6B35', // Navigator Orange
   '#FF8A65', // Navigator Orange Light
@@ -75,7 +75,7 @@ const colors = [
   '#F0E68C'  // Khaki
 ];
 
-// Criar datasets para cada retalhista
+// Create datasets for each retailer
 const datasets = [];
 let colorIndex = 0;
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Navigator UK Market Intelligence\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 15:27+0000\n"
+"POT-Creation-Date: 2025-09-29 15:45+0000\n"
 "PO-Revision-Date: 2025-09-29 15:23+0000\n"
 "Last-Translator: Navigator Team\n"
 "Language-Team: Portuguese <pt@navigator.com>\n"
@@ -16,6 +16,26 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: pricing/models.py:8
+msgid "Optional: other names this SKU might appear as."
+msgstr "Opcional: outros nomes com que este SKU pode aparecer."
+
+#: pricing/models.py:21
+msgid "CSS selector for current price (e.g., '.price_color')"
+msgstr "Seletor CSS para preço atual (ex: '.price_color')"
+
+#: pricing/models.py:22
+msgid "CSS selector for promo price if any"
+msgstr "Seletor CSS para preço promocional (se existir)"
+
+#: pricing/models.py:23
+msgid "CSS selector for promo text/badge"
+msgstr "Seletor CSS para texto/etiqueta promocional"
+
+#: pricing/models.py:44
+msgid "Optional: raw extracted text for audit/debug"
+msgstr "Opcional: texto extraído em bruto para auditoria/debug"
 
 #: pricing/views.py:31
 #, python-format
@@ -34,6 +54,10 @@ msgstr "Erro durante a extração: %(error)s"
 #: templates/base.html:8
 msgid "Navigator UK Market Intelligence (MVP)"
 msgstr "Navigator UK Market Intelligence (MVP)"
+
+#: templates/base.html:388
+msgid "Navigator Logo"
+msgstr "Logótipo Navigator"
 
 #: templates/base.html:426
 msgid "Prototype developed by"
@@ -63,7 +87,7 @@ msgstr "Nome"
 msgid "Latest Price"
 msgstr "Último Preço"
 
-#: templates/pricing/home.html:33 templates/pricing/sku_detail.html:139
+#: templates/pricing/home.html:33 templates/pricing/sku_detail.html:149
 msgid "Promo"
 msgstr "Promoção"
 
@@ -72,7 +96,7 @@ msgid "Currency"
 msgstr "Moeda"
 
 #: templates/pricing/home.html:55 templates/pricing/home.html:63
-#: templates/pricing/sku_detail.html:148
+#: templates/pricing/sku_detail.html:158
 msgid "No data"
 msgstr "Sem dados"
 
@@ -92,34 +116,34 @@ msgstr "Imprimir"
 msgid "Update Data"
 msgstr "Atualizar Dados"
 
-#: templates/pricing/sku_detail.html:103 templates/pricing/sku_detail.html:138
+#: templates/pricing/sku_detail.html:38 templates/pricing/sku_detail.html:148
 msgid "Price"
 msgstr "Preço"
 
-#: templates/pricing/sku_detail.html:109
+#: templates/pricing/sku_detail.html:39
 msgid "Time"
 msgstr "Tempo"
 
-#: templates/pricing/sku_detail.html:120
+#: templates/pricing/sku_detail.html:40
 msgid "Price Evolution by Retailer"
 msgstr "Evolução de Preços por Retalhista"
 
-#: templates/pricing/sku_detail.html:131
+#: templates/pricing/sku_detail.html:141
 msgid "History"
 msgstr "Histórico"
 
-#: templates/pricing/sku_detail.html:136
+#: templates/pricing/sku_detail.html:146
 msgid "Date"
 msgstr "Data"
 
-#: templates/pricing/sku_detail.html:137
+#: templates/pricing/sku_detail.html:147
 msgid "Retailer"
 msgstr "Retalhista"
 
-#: templates/pricing/sku_detail.html:140
+#: templates/pricing/sku_detail.html:150
 msgid "Note"
 msgstr "Nota"
 
-#: templates/pricing/sku_detail.html:149
+#: templates/pricing/sku_detail.html:159
 msgid "No promo"
 msgstr "Sem promoção"
