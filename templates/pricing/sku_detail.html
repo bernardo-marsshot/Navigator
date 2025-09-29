@@ -100,13 +100,13 @@ new Chart(ctx, {
         beginAtZero: false,
         title: {
           display: true,
-          text: 'Preço (£)'
+          text: '{% trans "Price" %} (£)'
         }
       },
       x: {
         title: {
           display: true,
-          text: 'Tempo'
+          text: '{% trans "Time" %}'
         }
       }
     },
@@ -145,8 +145,8 @@ new Chart(ctx, {
       <tr style="background-color: var(--navigator-white) !important;">
         <td>{{ p.timestamp }}</td>
         <td>{{ p.sku_listing.retailer.name }}</td>
-        <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">—</span>{% endif %}</td>
-        <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">{% trans "No data" %}</span>{% endif %}</td>
+        <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">{% trans "No promo" %}</span>{% endif %}</td>
         <td class="muted">{{ p.raw_snapshot|truncatechars:120 }}</td>
       </tr>
     {% endfor %}

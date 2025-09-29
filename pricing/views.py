@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
+from django.utils.translation import gettext as _
 from .models import SKU, PricePoint
 from .scraper import run_scrape_for_all_active
 
@@ -27,10 +28,10 @@ def scrape_now(request):
     try:
         count = run_scrape_for_all_active()
         if count > 0:
-            messages.success(request, f"Successfully scraped {count} listings!")
+            messages.success(request, _("Successfully scraped %(count)s listings!") % {'count': count})
         else:
-            messages.info(request, "No active listings found to scrape.")
+            messages.info(request, _("No active listings found to scrape."))
     except Exception as e:
-        messages.error(request, f"Error during scraping: {str(e)}")
+        messages.error(request, _("Error during scraping: %(error)s") % {'error': str(e)})
     
     return redirect("home")

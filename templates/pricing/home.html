@@ -52,7 +52,7 @@
           {% if latest_pp and latest_pp.price %}
           {{ latest_pp.price }}
           {% else %}
-          <span style="color:#999;">—</span>
+          <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
         </td>
         <td
@@ -60,7 +60,7 @@
           {% if latest_pp and latest_pp.promo_price %}
           {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
           {% else %}
-          <span style="color:#999;">—</span>
+          <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
         </td>
         <td

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Navigator UK Market Intelligence\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 15:23+0000\n"
+"POT-Creation-Date: 2025-09-29 15:27+0000\n"
 "PO-Revision-Date: 2025-09-29 15:23+0000\n"
 "Last-Translator: Navigator Team\n"
 "Language-Team: English <en@navigator.com>\n"
@@ -16,11 +16,26 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: pricing/views.py:31
+#, python-format
+msgid "Successfully scraped %(count)s listings!"
+msgstr "Successfully scraped %(count)s listings!"
+
+#: pricing/views.py:33
+msgid "No active listings found to scrape."
+msgstr "No active listings found to scrape."
+
+#: pricing/views.py:35
+#, python-format
+msgid "Error during scraping: %(error)s"
+msgstr "Error during scraping: %(error)s"
+
 #: templates/base.html:8
 msgid "Navigator UK Market Intelligence (MVP)"
 msgstr "Navigator UK Market Intelligence (MVP)"
 
-#: templates/base.html:425
+#: templates/base.html:426
 msgid "Prototype developed by"
 msgstr "Prototype developed by"
 
@@ -56,6 +71,11 @@ msgstr "Promo"
 msgid "Currency"
 msgstr "Currency"
 
+#: templates/pricing/home.html:55 templates/pricing/home.html:63
+#: templates/pricing/sku_detail.html:148
+msgid "No data"
+msgstr "No data"
+
 #: templates/pricing/home.html:76
 msgid "View Details"
 msgstr "View Details"
@@ -71,6 +91,14 @@ msgstr "Print"
 #: templates/pricing/sku_detail.html:23
 msgid "Update Data"
 msgstr "Update Data"
+
+#: templates/pricing/sku_detail.html:103 templates/pricing/sku_detail.html:138
+msgid "Price"
+msgstr "Price"
+
+#: templates/pricing/sku_detail.html:109
+msgid "Time"
+msgstr "Time"
 
 #: templates/pricing/sku_detail.html:120
 msgid "Price Evolution by Retailer"
@@ -88,10 +116,10 @@ msgstr "Date"
 msgid "Retailer"
 msgstr "Retailer"
 
-#: templates/pricing/sku_detail.html:138
-msgid "Price"
-msgstr "Price"
-
 #: templates/pricing/sku_detail.html:140
 msgid "Note"
 msgstr "Note"
+
+#: templates/pricing/sku_detail.html:149
+msgid "No promo"
+msgstr "No promo"
