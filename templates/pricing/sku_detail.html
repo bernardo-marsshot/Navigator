@@ -100,13 +100,13 @@ new Chart(ctx, {
         beginAtZero: false,
         title: {
           display: true,
-          text: '{% trans "Price" %} (£)'
+          text: translations.price + ' (£)'
         }
       },
       x: {
         title: {
           display: true,
-          text: '{% trans "Time" %}'
+          text: translations.time
         }
       }
     },
@@ -117,7 +117,7 @@ new Chart(ctx, {
       },
       title: {
         display: true,
-        text: '{% trans "Price Evolution by Retailer" %}'
+        text: translations.priceEvolution
       }
     },
     interaction: {
@@ -126,6 +126,16 @@ new Chart(ctx, {
     }
   }
 });
+</script>
+
+<!-- Get translated labels -->
+<script>
+// Get translations from Django
+const translations = {
+  price: '{% trans "Price" %}',
+  time: '{% trans "Time" %}',
+  priceEvolution: '{% trans "Price Evolution by Retailer" %}'
+};
 </script>
 
 <h3>{% trans "History" %}</h3>
