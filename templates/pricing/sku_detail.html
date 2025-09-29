@@ -31,6 +31,16 @@
   <canvas id="priceChart" style="width:100%; height:100%;"></canvas>
 </div>
 
+<!-- Get translated labels FIRST -->
+<script>
+// Get translations from Django
+const translations = {
+  price: '{% trans "Price" %}',
+  time: '{% trans "Time" %}',
+  priceEvolution: '{% trans "Price Evolution by Retailer" %}'
+};
+</script>
+
 <script>
 const ctx = document.getElementById('priceChart');
 
@@ -126,16 +136,6 @@ new Chart(ctx, {
     }
   }
 });
-</script>
-
-<!-- Get translated labels -->
-<script>
-// Get translations from Django
-const translations = {
-  price: '{% trans "Price" %}',
-  time: '{% trans "Time" %}',
-  priceEvolution: '{% trans "Price Evolution by Retailer" %}'
-};
 </script>
 
 <h3>{% trans "History" %}</h3>
