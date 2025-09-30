@@ -67,12 +67,49 @@ def fetch(url: str) -> Optional[str]:
     except Exception:
         return None
 
-def scrape_tesco_product_selenium(url: str) -> Optional[Dict[str, Any]]:
-    """Scrape individual Tesco product page using Selenium (JS rendering required)"""
+def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
+    """
+    Fallback method to extract price from HTML when CSS selectors fail.
+    Uses regex to find price patterns.
+    Returns (currency, price_decimal, price_text) or None
+    """
+    import re
+    
+    # Find all £X.XX patterns in the HTML
+    price_patterns = [
+        r'£\s*([0-9]+\.[0-9]{2})',  # £3.15
+        r'&pound;\s*([0-9]+\.[0-9]{2})',  # &pound;3.15
+        r'["\']price["\']:\s*([0-9]+\.[0-9]{2})',  # "price": 3.15
+    ]
+    
+    found_prices = []
+    for pattern in price_patterns:
+        matches = re.findall(pattern, html)
+        for match in matches:
+            try:
+                price_val = float(match)
+                # Filter out nonsense prices (0.00, very high numbers)
+                if 0.01 <= price_val <= 9999.99:
+                    found_prices.append(price_val)
+            except:
+                pass
+    
+    if found_prices:
+        # Return the most common price (likely the actual product price)
+        from collections import Counter
+        price_counts = Counter(found_prices)
+        most_common_price = price_counts.most_common(1)[0][0]
+        return ('£', Decimal(str(most_common_price)), f'£{most_common_price:.2f}')
+    
+    return None
+
+def scrape_with_selenium(url: str) -> Optional[str]:
+    """Scrape URL using Selenium for JavaScript-heavy sites"""
     try:
         from selenium import webdriver
-        from selenium.webdriver.common.by import By
         from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
+        from selenium.webdriver.common.by import By
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         
@@ -81,52 +118,30 @@ def scrape_tesco_product_selenium(url: str) -> Optional[Dict[str, Any]]:
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
+        options.add_argument('--disable-blink-features=AutomationControlled')
         
         driver = webdriver.Chrome(options=options)
         driver.get(url)
         
-        # Wait for price to load
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-auto='price-value'], .price, .product-price"))
-            )
-        except:
-            pass
+        # Wait up to 15 seconds for page to load
+        time.sleep(3)
         
-        # Try multiple price selectors
-        price_text = None
-        price_selectors = [
-            "[data-auto='price-value']",
-            ".beans__price-value",
-            ".price-per-sellable-unit",
-            ".price",
-            ".product-price"
-        ]
-        
-        for selector in price_selectors:
-            try:
-                elem = driver.find_element(By.CSS_SELECTOR, selector)
-                price_text = elem.text.strip()
-                if price_text and ('£' in price_text or price_text.replace('.', '').isdigit()):
-                    break
-            except:
-                continue
-        
+        html = driver.page_source
         driver.quit()
         
-        if price_text:
-            cur_sym, price_decimal = parse_price(price_text if '£' in price_text else f'£{price_text}')
-            if price_decimal:
-                return {
-                    'price': str(price_decimal),
-                    'currency': cur_sym or '£',
-                    'price_text': price_text
-                }
+        # Check if we got a Chrome error page (blocked/forbidden)
+        if 'color-scheme' in html and 'chrome-error' in html.lower():
+            print(f"⚠️ Selenium blocked/error page for {url}")
+            return None
         
-        return None
-        
+        # Check if we got actual content
+        if len(html) < 5000:  # Tesco pages are usually >100KB
+            print(f"⚠️ Suspiciously small response for {url}")
+            return None
+            
+        return html
     except Exception as e:
-        print(f"Selenium scraping failed: {e}")
+        print(f"Selenium failed: {e}")
         return None
 
 def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
@@ -136,26 +151,30 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
     if not selectors:
         return None
     
-    # Tesco requires Selenium because prices are rendered client-side
+    # Tesco blocks cloudscraper, use Selenium
     if listing.retailer.name == "Tesco":
-        tesco_data = scrape_tesco_product_selenium(listing.url)
-        if tesco_data:
-            pp = PricePoint.objects.create(
-                sku_listing=listing,
-                price=Decimal(tesco_data['price']),
-                raw_currency=tesco_data['currency'],
-                raw_snapshot=f"Selenium: {tesco_data['price_text']}"
-            )
-            time.sleep(random.uniform(1.0, 2.0))  # Longer delay for Selenium
-            return pp
-        return None
+        html = scrape_with_selenium(listing.url)
+    else:
+        # Other retailers: use cloudscraper
+        try:
+            scraper = cloudscraper.create_scraper()
+            ua = UserAgent()
+            scraper.headers.update({
+                'User-Agent': ua.chrome,
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-GB,en;q=0.5',
+            })
+            response = scraper.get(listing.url, timeout=20)
+            html = response.text if response.status_code == 200 else None
+        except:
+            html = fetch(listing.url)
     
-    # Other retailers: use standard fetch
-    html = fetch(listing.url)
     if not html:
         return None
     
     soup = BeautifulSoup(html, "html.parser")
+    
+    # Try configured CSS selectors first
     price_el = soup.select_one(selectors.price_selector)
     promo_price_el = soup.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
     promo_text_el = soup.select_one(selectors.promo_text_selector) if selectors.promo_text_selector else None
@@ -168,8 +187,16 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
     cur_sym2, promo_price = parse_price(raw_promo_price_text)
     currency = cur_sym or cur_sym2 or ""
 
-    if not price and not promo_price and not raw_promo_text:
-        return None
+    # If CSS selectors failed, try fallback regex method
+    if not price and not promo_price:
+        fallback_result = extract_price_from_html_fallback(html, listing.url)
+        if fallback_result:
+            currency, price, raw_price_text = fallback_result
+            raw_snapshot = f"Fallback regex: {raw_price_text}"
+        else:
+            return None  # No price found at all
+    else:
+        raw_snapshot = (raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or "")
 
     pp = PricePoint.objects.create(
         sku_listing=listing,
@@ -177,7 +204,7 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
         promo_price=promo_price,
         promo_text=raw_promo_text,
         raw_currency=currency,
-        raw_snapshot=(raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or ""),
+        raw_snapshot=raw_snapshot,
     )
     # polite delay
     time.sleep(random.uniform(0.5, 1.2))

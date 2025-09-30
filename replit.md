@@ -11,10 +11,14 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - Creates SKUs, SKUListings, and PricePoints automatically
   - Real scraping for Tesco (24 products found), demo mode for Sainsbury's, Asda, Morrisons
   - Usage: `python manage.py discover_products --setup-retailers --max-products 5`
-- **Integrated with UI**: "Scrape Now" button now automatically discovers new products AND updates existing prices
-  - Uses `discover_and_add_products()` function in scraper.py
-  - Discovers up to 5 new products per retailer on each run
-  - Seamlessly integrated into existing scraping workflow
+- **"Scrape Now" Button Behavior**: Updates prices for existing products ONLY (does not add new products)
+  - Uses cloudscraper for better reliability against Cloudflare protection
+  - Fallback to regex price extraction when CSS selectors fail
+  - Clear feedback: shows how many succeeded and how many failed
+  - Selenium detection for blocked/error pages
+- **Product Discovery**: Separate from "Scrape Now" - use `discover_products` command to add new products
+  - Auto-discovers products from Tesco search pages (not individual pages)
+  - Discovery and scraping are intentionally separate workflows
 
 ## Critical Bug Fixes
 - **Price Parsing Regex**: Fixed `parse_price()` function that was removing decimal places
@@ -26,7 +30,9 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 ## Multi-Retailer Configuration
 - 4 UK retailers configured: Tesco, Sainsbury's, Asda, Morrisons
 - Each with CSS selectors for price extraction
-- 11 products discovered across all retailers
+- Scraping uses cloudscraper + fallback regex for robust price extraction
+- **Tesco individual pages blocked**: Discovery works but individual product scraping fails (strong anti-bot protection)
+- Morrisons, Sainsbury's, Asda work with fallback regex when CSS selectors are outdated
 
 # User Preferences
 
