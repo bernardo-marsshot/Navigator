@@ -10,11 +10,14 @@ from .scraper import run_scrape_for_all_active
 
 def home(request):
     skus = SKU.objects.all().order_by("code")
-    latest = {}
+    skus_with_prices = []
     for sku in skus:
         pp = PricePoint.objects.filter(sku_listing__sku=sku).order_by("-timestamp").first()
-        latest[sku.id] = pp
-    return render(request, "pricing/home.html", {"skus": skus, "latest": latest})
+        skus_with_prices.append({
+            'sku': sku,
+            'latest_price': pp
+        })
+    return render(request, "pricing/home.html", {"skus_with_prices": skus_with_prices})
 
 def sku_detail(request, pk):
     sku = get_object_or_404(SKU, pk=pk)

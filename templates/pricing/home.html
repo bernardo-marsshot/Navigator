@@ -36,41 +36,40 @@
       </tr>
     </thead>
     <tbody style="background-color:#ffffff !important; color:#000000 !important;">
-      {% for sku in skus %}
-      {% with latest_pp=latest %}
+      {% for item in skus_with_prices %}
       <tr>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
-          {{ sku.code }}
+          {{ item.sku.code }}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
-          {{ sku.name }}
+          {{ item.sku.name }}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
-          {% if latest_pp and latest_pp.price %}
-          {{ latest_pp.price }}
+          {% if item.latest_price and item.latest_price.price %}
+          {{ item.latest_price.price }}
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
-          {% if latest_pp and latest_pp.promo_price %}
-          {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
+          {% if item.latest_price and item.latest_price.promo_price %}
+          {{ item.latest_price.promo_price }} ({{ item.latest_price.promo_text }})
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
-          {% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}
+          {% if item.latest_price %}{{ item.latest_price.raw_currency }}{% endif %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
           <div class="table-actions">
-            <a href="{% url 'sku_detail' sku.id %}"
+            <a href="{% url 'sku_detail' item.sku.id %}"
               style="background-color:#999999 !important; white-space: nowrap; color:#ffffff !important; padding:4px 8px; text-decoration:none; border-radius:4px; font-size:0.875rem;">
               <span style="margin-right: 0.25rem;">📊</span>
               {% trans "View Details" %}
@@ -78,7 +77,6 @@
           </div>
         </td>
       </tr>
-      {% endwith %}
       {% endfor %}
     </tbody>
   </table>
