@@ -1,6 +1,28 @@
 # Overview
 
-Navigator UK Market Intelligence is a Django-based web scraping platform designed for competitive price monitoring across UK retailers. The system allows users to configure CSS selectors for different retailers and automatically scrape product prices, building a historical database of pricing trends and promotional activities. The MVP includes a dashboard for viewing price data and manual scraping capabilities.
+Navigator UK Market Intelligence is a Django-based web scraping platform designed for competitive price monitoring across UK retailers. The system allows users to configure CSS selectors for different retailers and automatically scrape product prices, building a historical database of pricing trends and promotional activities. The MVP includes a dashboard for viewing price data and manual scraping capabilities with full internationalization (PT/EN) and automated product discovery.
+
+# Recent Changes (September 2025)
+
+## Product Discovery System
+- **Automated Discovery Command**: `discover_products` management command for automatic product finding
+  - Searches retailers for specific terms (default: "paper tissue")
+  - Auto-generates unique SKU codes from product titles
+  - Creates SKUs, SKUListings, and PricePoints automatically
+  - Real scraping for Tesco (24 products found), demo mode for Sainsbury's, Asda, Morrisons
+  - Usage: `python manage.py discover_products --setup-retailers --max-products 5`
+
+## Critical Bug Fixes
+- **Price Parsing Regex**: Fixed `parse_price()` function that was removing decimal places
+  - Changed `{{2}}` to `{2}` in regex pattern  
+  - All prices now save correctly with decimals (£3.15 vs £3.00)
+- **Template Dictionary Access**: Fixed home.html price display using `get_item` template tag
+  - Prices display correctly in both English and Portuguese
+
+## Multi-Retailer Configuration
+- 4 UK retailers configured: Tesco, Sainsbury's, Asda, Morrisons
+- Each with CSS selectors for price extraction
+- 11 products discovered across all retailers
 
 # User Preferences
 

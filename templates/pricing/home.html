@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load pricing_extras %}
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
   <h2 style="margin: 0;">{% trans "SKUs — Latest Prices" %}</h2>
@@ -37,7 +38,6 @@
     </thead>
     <tbody style="background-color:#ffffff !important; color:#000000 !important;">
       {% for sku in skus %}
-      {% with latest_pp=latest %}
       <tr>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
@@ -49,23 +49,29 @@
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp and latest_pp.price %}
           {{ latest_pp.price }}
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
+          {% endwith %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp and latest_pp.promo_price %}
           {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
+          {% endwith %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}
+          {% endwith %}
         </td>
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
@@ -78,7 +84,6 @@
           </div>
         </td>
       </tr>
-      {% endwith %}
       {% endfor %}
     </tbody>
   </table>

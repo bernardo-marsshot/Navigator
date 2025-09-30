@@ -252,15 +252,20 @@ class Command(BaseCommand):
                 # Create price point if we have a price
                 if price_str:
                     try:
-                        price_decimal = Decimal(str(price_str))
-                        PricePoint.objects.create(
-                            sku_listing=listing,
-                            price=price_decimal,
-                            raw_currency=currency,
-                            raw_snapshot=f"Discovered: {title} @ {price_str}"
-                        )
-                        self.stdout.write(f'    ✓ Scraped price: {currency}{price_str}')
-                        scraped_count += 1
+                        # Use parse_price to handle currency symbols and formatting
+                        cur_sym, price_decimal = parse_price(f"{currency}{price_str}")
+                        
+                        if price_decimal:
+                            PricePoint.objects.create(
+                                sku_listing=listing,
+                                price=price_decimal,
+                                raw_currency=cur_sym or currency,
+                                raw_snapshot=f"Discovered: {title} @ {currency}{price_str}"
+                            )
+                            self.stdout.write(f'    ✓ Scraped price: {currency}{price_str}')
+                            scraped_count += 1
+                        else:
+                            self.stdout.write(self.style.WARNING(f'    ! Could not parse price: {price_str}'))
                     except Exception as e:
                         self.stdout.write(self.style.WARNING(f'    ! Price error: {e}'))
 

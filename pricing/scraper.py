@@ -39,7 +39,7 @@ TESCO_HEADERS = {
     "Cache-Control": "max-age=0",
 }
 
-CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{{2}})?)", re.UNICODE)
+CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{2})?)", re.UNICODE)
 
 def parse_price(text: str) -> Tuple[Optional[str], Optional[Decimal]]:
     if not text:
@@ -47,7 +47,7 @@ def parse_price(text: str) -> Tuple[Optional[str], Optional[Decimal]]:
     m = CURRENCY_REGEX.search(text.replace(",", ""))
     if not m:
         # fallback: numbers only
-        m2 = re.search(r"([0-9]+(?:[.][0-9]{{2}})?)", text.replace(",", ""))
+        m2 = re.search(r"([0-9]+(?:[.][0-9]{2})?)", text.replace(",", ""))
         if not m2:
             return None, None
         return None, Decimal(m2.group(1))
