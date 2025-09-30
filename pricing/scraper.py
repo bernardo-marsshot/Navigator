@@ -1,378 +1,575 @@
-# pricing/scraper.py
-from __future__ import annotations
+
 import re
 import time
 import random
+import json
+import os
 from decimal import Decimal
-from typing import Optional, Dict, Callable, List, Tuple
-from urllib.parse import urlparse
-
+from typing import Optional, Tuple, Dict, Any, List
 import requests
 from bs4 import BeautifulSoup
-from django.db import transaction
+from django.conf import settings
+from .models import Retailer, SKUListing, PricePoint, SKU
 
-try:
-    import cloudscraper
-    from fake_useragent import UserAgent
-    CLOUDSCRAPER_AVAILABLE = True
-except ImportError:
-    CLOUDSCRAPER_AVAILABLE = False
+# Advanced scraping libraries
+import cloudscraper
+from fake_useragent import UserAgent
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-from .models import Retailer, SKUListing, PricePoint
-
-# -------- Configurações globais --------
 HEADERS_POOL = [
-    {
-        "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
-    },
-    {
-        "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
-    },
+    {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"},
+    {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"},
 ]
-CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{1,2})?)",
-                            re.UNICODE)
 
-# Rate limit simples (educado). Para produção, usar um scheduler (Celery).
-DEFAULT_DELAY_SEC = (0.8, 1.8)
+TESCO_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-GB,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Cache-Control": "max-age=0",
+}
 
-# Registry opcional de handlers por domínio (caso precises de lógica especial)
-# Key: domínio (ex.: "amazon.co.uk"), Value: callable(listing) -> dict|None
-RETAILER_HANDLER_REGISTRY: Dict[str, Callable[[SKUListing],
-                                              Optional[dict]]] = {}
-
-# Função para registrar handlers após serem definidos
-def _register_handlers():
-    """Registra handlers específicos após serem definidos"""
-    RETAILER_HANDLER_REGISTRY.update({
-        "www.tesco.com": scrape_tesco,
-        "tesco.com": scrape_tesco,
-    })
-
-
-# -------- Utils --------
-def _rand_delay(bounds: Tuple[float, float] = DEFAULT_DELAY_SEC):
-    time.sleep(random.uniform(*bounds))
-
+CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{{2}})?)", re.UNICODE)
 
 def parse_price(text: str) -> Tuple[Optional[str], Optional[Decimal]]:
     if not text:
         return None, None
-    # normalizar separadores
-    t = text.replace(",", "")
-    m = CURRENCY_REGEX.search(t)
-    if m:
-        symbol, amount = m.groups()
-        try:
-            return symbol, Decimal(amount)
-        except Exception:
-            return symbol, None
-    # fallback: números soltos
-    m2 = re.search(r"([0-9]+(?:[.][0-9]{1,2})?)", t)
-    if m2:
-        try:
-            return None, Decimal(m2.group(1))
-        except Exception:
+    m = CURRENCY_REGEX.search(text.replace(",", ""))
+    if not m:
+        # fallback: numbers only
+        m2 = re.search(r"([0-9]+(?:[.][0-9]{{2}})?)", text.replace(",", ""))
+        if not m2:
             return None, None
-    return None, None
-
-
-def fetch(url: str, timeout: int = 25, max_retries: int = 2) -> Optional[str]:
-    """
-    Fetch simples com cabeçalhos rotativos e 2 tentativas.
-    Para páginas JS heavy, numa fase 2 integramos Playwright.
-    """
-    last_err = None
-    for attempt in range(1, max_retries + 1):
-        try:
-            headers = random.choice(HEADERS_POOL)
-            resp = requests.get(url, headers=headers, timeout=timeout)
-            if resp.status_code == 200 and resp.text:
-                return resp.text
-            # status != 200 -> tentar de novo (mas sem martelar)
-            _rand_delay((1.0, 2.2))
-        except Exception as e:
-            last_err = e
-            _rand_delay((1.0, 2.2))
-    # Falhou
-    return None
-
-
-def extract_with_selectors(soup: BeautifulSoup, selector: str) -> str:
-    if not selector:
-        return ""
-    el = soup.select_one(selector)
-    return el.get_text(strip=True) if el else ""
-
-
-def domain_from_url(url: str) -> str:
+        return None, Decimal(m2.group(1))
+    symbol, amount = m.groups()
     try:
-        return urlparse(url).netloc.lower()
+        return symbol, Decimal(amount)
     except Exception:
-        return ""
+        return symbol, None
 
+def fetch(url: str) -> Optional[str]:
+    try:
+        headers = random.choice(HEADERS_POOL)
+        resp = requests.get(url, headers=headers, timeout=20)
+        if resp.status_code == 200:
+            return resp.text
+        return None
+    except Exception:
+        return None
 
-# -------- Fallback universal por seletores CSS --------
-def scrape_via_selectors(listing: SKUListing) -> Optional[dict]:
-    """
-    Leitura genérica: usa os seletores CSS configurados para o retalhista.
-    """
+def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
+    if not listing.is_active or not listing.retailer.is_active:
+        return None
     selectors = getattr(listing.retailer, "selectors", None)
     if not selectors:
         return None
-
     html = fetch(listing.url)
     if not html:
         return None
-
     soup = BeautifulSoup(html, "html.parser")
+    price_el = soup.select_one(selectors.price_selector)
+    promo_price_el = soup.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
+    promo_text_el = soup.select_one(selectors.promo_text_selector) if selectors.promo_text_selector else None
 
-    raw_price_text = extract_with_selectors(soup, selectors.price_selector)
-    raw_promo_price_text = extract_with_selectors(
-        soup, selectors.promo_price_selector
-    ) if selectors.promo_price_selector else ""
-    raw_promo_text = extract_with_selectors(
-        soup,
-        selectors.promo_text_selector) if selectors.promo_text_selector else ""
+    raw_price_text = price_el.get_text(strip=True) if price_el else ""
+    raw_promo_price_text = promo_price_el.get_text(strip=True) if promo_price_el else ""
+    raw_promo_text = promo_text_el.get_text(strip=True) if promo_text_el else ""
 
     cur_sym, price = parse_price(raw_price_text)
     cur_sym2, promo_price = parse_price(raw_promo_price_text)
     currency = cur_sym or cur_sym2 or ""
 
-    # Título opcional (útil para auditoria ou debug)
-    title = ""
-    t_el = soup.find("h1") or soup.select_one(
-        "h1, .product-title, .pdp-product-name, [data-testid*=title]")
-    if t_el:
-        title = t_el.get_text(strip=True)[:250]
-
-    # Se nada foi encontrado, desistir
     if not price and not promo_price and not raw_promo_text:
         return None
 
-    return {
-        "status": "success",
-        "url": listing.url,
-        "retailer": listing.retailer.name,
-        "title": title,
-        "price": price,  # Decimal | None
-        "promo_price": promo_price,  # Decimal | None
-        "promo_text": raw_promo_text or "",
-        "currency": currency or "",
-        "snapshot":
-        f"{raw_price_text} | promo: {raw_promo_price_text} | {raw_promo_text}",
-        "method": "css_selectors_fallback"
-    }
+    pp = PricePoint.objects.create(
+        sku_listing=listing,
+        price=price,
+        promo_price=promo_price,
+        promo_text=raw_promo_text,
+        raw_currency=currency,
+        raw_snapshot=(raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or ""),
+    )
+    # polite delay
+    time.sleep(random.uniform(0.5, 1.2))
+    return pp
 
-
-# -------- Tesco Handler (demo mode with real structure) --------
-def scrape_tesco(listing: SKUListing) -> Optional[dict]:
-    """
-    Handler específico para Tesco.
-    NOTA: Tesco usa JavaScript para carregar produtos, então scraping real requer Selenium/Playwright.
-    Para MVP/demo, retornamos preços simulados baseados nos produtos conhecidos.
-    """
+def scrape_tesco_search_cloudscraper(search_term: str = "paper tissue") -> List[Dict[str, Any]]:
+    """Scrape Tesco search results using cloudscraper to bypass Cloudflare"""
     try:
-        # Tentar acesso avançado com cloudscraper se disponível
-        if CLOUDSCRAPER_AVAILABLE:
-            scraper = cloudscraper.create_scraper()
-            ua = UserAgent()
-            
-            scraper.headers.update({
-                'User-Agent': ua.chrome,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-GB,en;q=0.5',
-                'DNT': '1',
-                'Referer': 'https://www.tesco.com/groceries/en-GB/',
-            })
-            
-            response = scraper.get(listing.url, timeout=20)
-            
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                
-                # Tentar extrair dados da página (pode estar no JSON embutido)
-                scripts = soup.find_all('script', type='application/ld+json')
-                for script in scripts:
-                    try:
-                        import json
-                        data = json.loads(script.string)
-                        if isinstance(data, dict):
-                            name = data.get('name', '')
-                            offers = data.get('offers', {})
-                            price_text = offers.get('price', '')
-                            if name and price_text:
-                                cur_sym, price = parse_price(str(price_text))
-                                if price:
-                                    return {
-                                        "status": "success",
-                                        "url": listing.url,
-                                        "retailer": "Tesco",
-                                        "title": name[:250],
-                                        "price": price,
-                                        "promo_price": None,
-                                        "promo_text": "",
-                                        "currency": cur_sym or "£",
-                                        "snapshot": f"Structured data: {price_text}",
-                                        "method": "tesco_structured_data"
-                                    }
-                    except:
-                        continue
-                
-                # Fallback: tentar seletores comuns
-                title_elem = soup.select_one('h1, [data-auto*="product-title"]')
-                title = title_elem.get_text(strip=True) if title_elem else ""
-                
-                price_selectors = [
-                    '[data-auto="price-value"]',
-                    '.price-per-sellable-unit',
-                    '.price-control-wrapper .value',
-                    'p[class*="price"] span.value'
-                ]
-                
-                price_text = ""
-                for selector in price_selectors:
-                    elem = soup.select_one(selector)
-                    if elem:
-                        price_text = elem.get_text(strip=True)
-                        break
-                
-                if title and price_text:
+        scraper = cloudscraper.create_scraper()
+        ua = UserAgent()
+
+        # Set realistic headers
+        scraper.headers.update({
+            'User-Agent': ua.chrome,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+        })
+
+        # Search URL for Tesco
+        search_url = f"https://www.tesco.com/groceries/en-GB/search?query={search_term.replace(' ', '%20')}"
+        print(f"Searching Tesco for: {search_term}")
+        print(f"URL: {search_url}")
+
+        response = scraper.get(search_url, timeout=30)
+        print(f"Response status: {response.status_code}")
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Look for Tesco product tiles (updated with real selectors)
+            product_selectors = [
+                '._64Yvfa_verticalTile',  # Real Tesco product tile selector
+                '.product-tile',
+                '.product-list__item',
+                '[data-testid="product-tile"]',
+                '.product-item',
+                '.product-card',
+            ]
+
+            products = []
+            product_elements = []
+            for selector in product_selectors:
+                product_elements = soup.select(selector)
+                if product_elements:
+                    print(f"Found {len(product_elements)} products with selector: {selector}")
+                    break
+
+            if not product_elements:
+                # Try to find any elements with product-related content
+                product_elements = soup.find_all(lambda tag: tag.name and 
+                                                'product' in str(tag.get('class', '')) or
+                                                'product' in str(tag.get('id', '')))
+                print(f"Found {len(product_elements)} elements with 'product' in class/id")
+
+            for element in product_elements[:5]:  # Limit to first 5 products
+                try:
+                    product_data = extract_product_data_from_element(element, search_url)
+                    if product_data:
+                        products.append(product_data)
+                except Exception as e:
+                    print(f"Error extracting product data: {e}")
+                    continue
+
+            return products
+
+        print(f"Failed to access Tesco search: {response.status_code}")
+        return []
+
+    except Exception as e:
+        print(f"Cloudscraper error: {e}")
+        return []
+
+def scrape_tesco_search_selenium(search_term: str = "paper tissue") -> List[Dict[str, Any]]:
+    """Scrape Tesco search results using Selenium"""
+    driver = None
+    try:
+        print("Trying Selenium approach...")
+
+        # Set up Chrome options
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-plugins")
+        chrome_options.add_argument("--disable-images")
+        chrome_options.add_argument("--disable-javascript")
+
+        ua = UserAgent()
+        chrome_options.add_argument(f"--user-agent={ua.chrome}")
+
+        driver = webdriver.Chrome(options=chrome_options)
+        driver.set_page_load_timeout(30)
+
+        # Navigate to Tesco search
+        search_url = f"https://www.tesco.com/groceries/en-GB/search?query={search_term.replace(' ', '%20')}"
+        print(f"Navigating to: {search_url}")
+
+        driver.get(search_url)
+
+        # Wait for page to load
+        time.sleep(5)
+
+        # Try to find product elements
+        product_selectors = [
+            "//div[contains(@class, 'product')]",
+            "//article[contains(@class, 'product')]", 
+            "//li[contains(@class, 'product')]",
+            "//*[contains(@data-testid, 'product')]"
+        ]
+
+        products = []
+        for selector in product_selectors:
+            try:
+                elements = driver.find_elements(By.XPATH, selector)
+                if elements:
+                    print(f"Found {len(elements)} products with selector: {selector}")
+                    for element in elements[:5]:
+                        try:
+                            product_data = extract_product_data_from_selenium_element(element, search_url)
+                            if product_data:
+                                products.append(product_data)
+                        except Exception as e:
+                            print(f"Error extracting product data: {e}")
+                    break
+            except Exception as e:
+                print(f"Error with selector {selector}: {e}")
+
+        return products
+
+    except Exception as e:
+        print(f"Selenium error: {e}")
+        return []
+    finally:
+        if driver:
+            driver.quit()
+
+def extract_product_data_from_element(element, search_url: str) -> Optional[Dict[str, Any]]:
+    """Extract product data from a BeautifulSoup element"""
+    try:
+        product_data = {
+            "search_url": search_url,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "retailer": "Tesco",
+            "search_term": "paper tissue"
+        }
+
+        # Try to find title (updated with real Tesco selectors)
+        title_selectors = [
+            '._64Yvfa_titleLink',  # Real Tesco title link selector
+            '.product-tile__title',
+            '.product-title', 
+            'h2 a', 'h3 a', 'h4 a',
+            '[data-testid="product-title"]',
+            'a[href*="/products/"]'
+        ]
+
+        for selector in title_selectors:
+            title_elem = element.select_one(selector)
+            if title_elem:
+                title = title_elem.get_text(strip=True) or title_elem.get('title', '')
+                if title and len(title) > 3:  # Ensure meaningful title
+                    product_data["title"] = title
+                    break
+
+        # Try to find price (updated approach for Tesco)
+        # First try specific selectors, then search for £ symbols
+        price_found = False
+        price_selectors = [
+            '.price',
+            '.product-price',
+            '[data-testid="price"]',
+            '.cost',
+            '.price-current',
+            '.price-value'
+        ]
+
+        for selector in price_selectors:
+            price_elem = element.select_one(selector)
+            if price_elem:
+                price_text = price_elem.get_text(strip=True)
+                if price_text and '£' in price_text:
                     cur_sym, price = parse_price(price_text)
                     if price:
-                        return {
-                            "status": "success",
-                            "url": listing.url,
-                            "retailer": "Tesco",
-                            "title": title[:250],
-                            "price": price,
-                            "promo_price": None,
-                            "promo_text": "",
-                            "currency": cur_sym or "£",
-                            "snapshot": price_text,
-                            "method": "tesco_direct"
-                        }
-        
-        # Fallback demo (sempre disponível, mesmo sem cloudscraper)
-        product_id = listing.url.rstrip('/').split('/')[-1]
-        demo_prices = {
-            "255135337": ("Tesco Luxury Toilet Tissue 9 Roll", "3.50"),
-            "268588417": ("Andrex Classic Clean Toilet Tissue 9 Roll", "6.00"),
-            "257581589": ("Cushelle Toilet Tissue White 9 Roll", "5.25"),
-        }
-        
-        if product_id in demo_prices:
-            name, price_str = demo_prices[product_id]
-            cur_sym, price = parse_price(f"£{price_str}")
-            return {
-                "status": "success",
-                "url": listing.url,
-                "retailer": "Tesco",
-                "title": name,
-                "price": price,
-                "promo_price": None,
-                "promo_text": "",
-                "currency": "£",
-                "snapshot": f"Demo mode: £{price_str}",
-                "method": "tesco_demo"
-            }
-        
-        return {
-            "status": "failed",
-            "error": "Tesco product not found in demo database. For production, install cloudscraper and use Selenium/Playwright.",
-            "url": listing.url
-        }
-        
-    except Exception as e:
-        return {
-            "status": "failed",
-            "error": str(e),
-            "url": listing.url
-        }
+                        product_data["price"] = str(price)
+                        product_data["currency"] = cur_sym or "£"
+                        product_data["price_text"] = price_text
+                        price_found = True
+                        break
 
+        # If no price found with selectors, search for £ symbols in the element
+        if not price_found:
+            all_text = element.get_text()
+            import re
+            price_matches = re.findall(r'£\s*([0-9]+(?:\.[0-9]{2})?)', all_text)
+            if price_matches:
+                try:
+                    price_value = price_matches[0]
+                    product_data["price"] = price_value
+                    product_data["currency"] = "£"
+                    product_data["price_text"] = f"£{price_value}"
+                except:
+                    pass
 
-# -------- Handler dispatcher --------
-def scrape_listing(listing: SKUListing) -> Optional[dict]:
-    """
-    Orquestra scraping para UM listing:
-    1) Se houver handler específico para o domínio, usa-o.
-    2) Caso contrário, usa o fallback por seletores CSS do RetailerSelector.
-    """
-    if not listing.is_active or not listing.retailer.is_active:
+        # Try to find product URL (prioritize Tesco product links)
+        url_selectors = [
+            '._64Yvfa_titleLink',  # Real Tesco title link
+            'a[href*="/products/"]',  # Tesco product URLs
+            'a[href]'
+        ]
+
+        for selector in url_selectors:
+            link_elem = element.select_one(selector)
+            if link_elem:
+                href = link_elem.get('href')
+                if href:
+                    if href.startswith('/'):
+                        product_data["url"] = f"https://www.tesco.com{href}"
+                    elif href.startswith('http'):
+                        product_data["url"] = href
+                    break
+
+        # Only return if we found at least title or price
+        if product_data.get("title") or product_data.get("price"):
+            return product_data
+
         return None
 
-    dom = domain_from_url(listing.url)
-    handler = RETAILER_HANDLER_REGISTRY.get(dom)
+    except Exception as e:
+        print(f"Error extracting product data: {e}")
+        return None
 
-    if handler:
-        result = handler(listing)
-        if result and result.get("status") == "success":
-            return result
-        # Se handler não conseguiu, tenta fallback por seletores
-        _rand_delay()
-        fb = scrape_via_selectors(listing)
-        if fb:
-            return fb
-        return result  # devolve erro do handler
+def extract_product_data_from_selenium_element(element, search_url: str) -> Optional[Dict[str, Any]]:
+    """Extract product data from a Selenium WebElement"""
+    try:
+        product_data = {
+            "search_url": search_url,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "retailer": "Tesco",
+            "search_term": "paper tissue"
+        }
 
-    # Sem handler → universal selectors
-    return scrape_via_selectors(listing)
-
-
-# -------- Execução: todos os listings ativos --------
-def run_scrape_for_all_active(
-        rate_limit: Tuple[float, float] = DEFAULT_DELAY_SEC) -> int:
-    """
-    Percorre todos os SKUListing ativos e cria PricePoints quando encontra preço válido.
-    Retorna o número de PricePoints criados.
-    """
-    created = 0
-    qs = (SKUListing.objects.select_related("retailer").filter(
-        is_active=True, retailer__is_active=True))
-
-    for listing in qs:
+        # Try to find title
         try:
-            data = scrape_listing(listing)
-            if not data or data.get("status") != "success":
-                continue
+            title = element.find_element(By.CSS_SELECTOR, ".product-tile__title, .product-title, h3, h4, h5").text.strip()
+            if title:
+                product_data["title"] = title
+        except:
+            try:
+                title = element.get_attribute("title") or element.text.strip()
+                if title and len(title) < 200:  # Reasonable title length
+                    product_data["title"] = title
+            except:
+                pass
 
-            # Guardar na BD: preferir promo_price se existir (mas guardamos ambos)
-            price = data.get("price")
-            promo_price = data.get("promo_price")
-            promo_text = (data.get("promo_text") or "")[:255]
-            raw_currency = (data.get("currency") or "")[:10]
-            raw_snapshot = (data.get("snapshot") or "")[:4000]
+        # Try to find price
+        try:
+            price_elem = element.find_element(By.CSS_SELECTOR, ".price, .product-price, .cost")
+            price_text = price_elem.text.strip()
+            if price_text and '£' in price_text:
+                cur_sym, price = parse_price(price_text)
+                if price:
+                    product_data["price"] = str(price)
+                    product_data["currency"] = cur_sym or "£"
+                    product_data["price_text"] = price_text
+        except:
+            pass
 
-            # Validação mínima
-            if (price is None and promo_price is None):
-                continue
-            if price is not None and price <= 0:
+        # Try to find product URL
+        try:
+            link_elem = element.find_element(By.TAG_NAME, "a")
+            href = link_elem.get_attribute("href")
+            if href:
+                product_data["url"] = href
+        except:
+            pass
+
+        # Only return if we found at least title or price
+        if product_data.get("title") or product_data.get("price"):
+            return product_data
+
+        return None
+
+    except Exception as e:
+        print(f"Error extracting product data from Selenium element: {e}")
+        return None
+
+def scrape_tesco_paper_tissue() -> List[Dict[str, Any]]:
+    """Main function to scrape Tesco for paper tissue products"""
+    print("=== Starting Tesco Paper Tissue Scraping ===")
+
+    # Try cloudscraper first
+    products = scrape_tesco_search_cloudscraper("paper tissue")
+
+    if not products:
+        print("Cloudscraper failed, trying Selenium...")
+        products = scrape_tesco_search_selenium("paper tissue")
+
+    if not products:
+        print("All scraping methods failed!")
+        return []
+
+    print(f"Successfully scraped {len(products)} products")
+    return products
+
+def save_to_json(data: Dict[str, Any], filename: str = "TESCO.json") -> bool:
+    """Save single scraped data to JSON file"""
+    try:
+        # Create full file path
+        file_path = os.path.join(settings.BASE_DIR, filename)
+
+        # Load existing data if file exists
+        existing_data = []
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    existing_data = json.load(f)
+            except:
+                existing_data = []
+
+        # Ensure existing_data is a list
+        if not isinstance(existing_data, list):
+            existing_data = [existing_data] if existing_data else []
+
+        # Append new data
+        existing_data.append(data)
+
+        # Save updated data
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, indent=2, ensure_ascii=False)
+
+        print(f"Data saved to {file_path}")
+        return True
+    except Exception as e:
+        print(f"Error saving to JSON: {e}")
+        return False
+
+def save_all_products_to_json(products: List[Dict[str, Any]], filename: str = "TESCO.json") -> bool:
+    """Save all scraped products to single JSON file"""
+    try:
+        # Create full file path
+        file_path = os.path.join(settings.BASE_DIR, filename)
+
+        # Save all products directly to the file (overwrite existing)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(products, f, indent=2, ensure_ascii=False)
+
+        print(f"All {len(products)} products saved to {file_path}")
+        return True
+    except Exception as e:
+        print(f"Error saving all products to JSON: {e}")
+        return False
+
+def save_tesco_products_to_database(products: List[Dict[str, Any]]) -> List[PricePoint]:
+    """Save multiple Tesco products to database"""
+    saved_price_points = []
+
+    try:
+        # Get or create Tesco retailer
+        retailer, created = Retailer.objects.get_or_create(
+            name="Tesco",
+            defaults={
+                "base_url": "https://www.tesco.com",
+                "is_active": True
+            }
+        )
+
+        for product_data in products:
+            try:
+                # Create unique SKU code based on title or URL
+                title = product_data.get("title", "Unknown Product")
+                url = product_data.get("url", "")
+
+                # Generate unique SKU code
+                if url:
+                    sku_id = url.split('/')[-1] or url.split('/')[-2]
+                else:
+                    sku_id = re.sub(r'[^a-zA-Z0-9]', '', title.lower())[:20]
+
+                sku_code = f"TESCO-{sku_id}"
+
+                # Get or create SKU
+                sku, created = SKU.objects.get_or_create(
+                    code=sku_code,
+                    defaults={
+                        "name": title,
+                        "competitor_names": ""
+                    }
+                )
+
+                # Get or create SKU listing
+                listing, created = SKUListing.objects.get_or_create(
+                    sku=sku,
+                    retailer=retailer,
+                    url=url or product_data.get("search_url", ""),
+                    defaults={"is_active": True}
+                )
+
+                # Create price point
                 price = None
-            if promo_price is not None and promo_price <= 0:
                 promo_price = None
-            if price is None and promo_price is None:
-                continue
 
-            with transaction.atomic():
-                PricePoint.objects.create(
+                if product_data.get("price"):
+                    try:
+                        price = Decimal(product_data["price"])
+                    except:
+                        pass
+
+                if product_data.get("promo_price"):
+                    try:
+                        promo_price = Decimal(product_data["promo_price"])
+                    except:
+                        pass
+
+                price_point = PricePoint.objects.create(
                     sku_listing=listing,
                     price=price,
                     promo_price=promo_price,
-                    promo_text=promo_text,
-                    raw_currency=raw_currency,
-                    raw_snapshot=raw_snapshot,
+                    promo_text=product_data.get("promo_price_text", ""),
+                    raw_currency=product_data.get("currency", "£"),
+                    raw_snapshot=json.dumps(product_data, ensure_ascii=False)
                 )
-                created += 1
 
-        except Exception:
-            # manter o scraper resiliente: ignora erro e segue
-            pass
-        finally:
-            _rand_delay(rate_limit)
+                saved_price_points.append(price_point)
+                print(f"Saved price point to database: {price_point}")
 
-    return created
+            except Exception as e:
+                print(f"Error saving product to database: {e}")
+                continue
 
+        return saved_price_points
 
-# Registrar handlers ao carregar módulo
-_register_handlers()
+    except Exception as e:
+        print(f"Error in save_tesco_products_to_database: {e}")
+        return []
+
+def run_scrape_for_all_active() -> int:
+    count = 0
+
+    # Scrape Tesco for paper tissue products
+    print("=== Starting Tesco Paper Tissue Scraping ===")
+    tesco_products = scrape_tesco_paper_tissue()
+
+    if tesco_products:
+        print(f"Found {len(tesco_products)} Tesco products")
+
+        # Save ALL products to single TESCO.json file as requested
+        save_all_products_to_json(tesco_products, "TESCO.json")
+
+        # Save all products to database
+        price_points = save_tesco_products_to_database(tesco_products)
+        count += len(price_points)
+
+        if price_points:
+            print(f"Successfully scraped and saved {len(price_points)} Tesco products!")
+        else:
+            print("Failed to save products to database")
+    else:
+        print("No Tesco products found!")
+
+    # Then run existing scraper for other active listings
+    qs = SKUListing.objects.select_related("retailer").filter(is_active=True, retailer__is_active=True)
+    for listing in qs:
+        if listing.retailer.name != "Tesco":  # Avoid duplicating Tesco scraping
+            pp = scrape_listing(listing)
+            if pp:
+                count += 1
+
+    return count
