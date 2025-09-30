@@ -540,36 +540,109 @@ def save_tesco_products_to_database(products: List[Dict[str, Any]]) -> List[Pric
         print(f"Error in save_tesco_products_to_database: {e}")
         return []
 
+def generate_sku_code(retailer_name: str, product_title: str) -> str:
+    """Generate unique SKU code from retailer and product title"""
+    clean_title = re.sub(r'[^\w\s-]', '', product_title.lower())
+    words = clean_title.split()[:3]
+    retailer_prefix = retailer_name[:4].upper().replace("'", "")
+    title_part = '-'.join(words)[:20]
+    base_code = f"{retailer_prefix}-{title_part}"
+    
+    code = base_code
+    counter = 1
+    while SKU.objects.filter(code=code).exists():
+        code = f"{base_code}-{counter}"
+        counter += 1
+    
+    return code
+
+
+def discover_and_add_products(search_term: str = "paper tissue", max_products: int = 5) -> Dict[str, int]:
+    """
+    Discover and add new products from all active retailers
+    Returns dict with counts of added SKUs and scraped prices
+    """
+    from pricing.models import Retailer
+    
+    added_count = 0
+    scraped_count = 0
+    
+    retailers = Retailer.objects.filter(is_active=True)
+    
+    for retailer in retailers:
+        products = []
+        
+        # Discover products based on retailer
+        if retailer.name == 'Tesco':
+            products = scrape_tesco_search_cloudscraper(search_term)
+            if not products:
+                products = scrape_tesco_search_selenium(search_term)
+        
+        # Add products to database
+        for product in products[:max_products]:
+            try:
+                title = product.get('title', '')
+                url = product.get('url', '')
+                price_str = product.get('price', '')
+                currency = product.get('currency', '£')
+                
+                if not title or not url:
+                    continue
+                
+                # Generate SKU code
+                sku_code = generate_sku_code(retailer.name, title)
+                
+                # Create or get SKU
+                sku, sku_created = SKU.objects.get_or_create(
+                    code=sku_code,
+                    defaults={'name': title}
+                )
+                
+                if sku_created:
+                    added_count += 1
+                
+                # Create or get listing
+                listing, listing_created = SKUListing.objects.get_or_create(
+                    sku=sku,
+                    retailer=retailer,
+                    url=url,
+                    defaults={'is_active': True}
+                )
+                
+                # Create price point
+                if price_str:
+                    cur_sym, price_decimal = parse_price(f"{currency}{price_str}")
+                    if price_decimal:
+                        PricePoint.objects.create(
+                            sku_listing=listing,
+                            price=price_decimal,
+                            raw_currency=cur_sym or currency,
+                            raw_snapshot=f"Auto-discovered: {title}"
+                        )
+                        scraped_count += 1
+                        
+            except Exception as e:
+                print(f"Error adding product: {e}")
+                continue
+    
+    return {'added': added_count, 'scraped': scraped_count}
+
+
 def run_scrape_for_all_active() -> int:
     count = 0
 
-    # Scrape Tesco for paper tissue products
-    print("=== Starting Tesco Paper Tissue Scraping ===")
-    tesco_products = scrape_tesco_paper_tissue()
+    # First, discover new products automatically
+    print("=== Discovering new products ===")
+    discovery_result = discover_and_add_products(search_term="paper tissue", max_products=5)
+    print(f"Discovered: {discovery_result['added']} new products, {discovery_result['scraped']} prices")
+    count += discovery_result['scraped']
 
-    if tesco_products:
-        print(f"Found {len(tesco_products)} Tesco products")
-
-        # Save ALL products to single TESCO.json file as requested
-        save_all_products_to_json(tesco_products, "TESCO.json")
-
-        # Save all products to database
-        price_points = save_tesco_products_to_database(tesco_products)
-        count += len(price_points)
-
-        if price_points:
-            print(f"Successfully scraped and saved {len(price_points)} Tesco products!")
-        else:
-            print("Failed to save products to database")
-    else:
-        print("No Tesco products found!")
-
-    # Then run existing scraper for other active listings
+    # Then scrape existing listings for price updates
+    print("=== Updating prices for existing products ===")
     qs = SKUListing.objects.select_related("retailer").filter(is_active=True, retailer__is_active=True)
     for listing in qs:
-        if listing.retailer.name != "Tesco":  # Avoid duplicating Tesco scraping
-            pp = scrape_listing(listing)
-            if pp:
-                count += 1
+        pp = scrape_listing(listing)
+        if pp:
+            count += 1
 
     return count
