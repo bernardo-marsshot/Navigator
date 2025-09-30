@@ -1,6 +1,21 @@
 # Overview
 
-Navigator UK Market Intelligence is a Django-based web scraping platform designed for competitive price monitoring across UK retailers. The system allows users to configure CSS selectors for different retailers and automatically scrape product prices, building a historical database of pricing trends and promotional activities. The MVP includes a dashboard for viewing price data and manual scraping capabilities.
+Navigator UK Market Intelligence is a Django-based web scraping platform designed for competitive price monitoring across UK retailers. The system allows users to configure CSS selectors for different retailers and automatically scrape product prices, building a historical database of pricing trends and promotional activities. The MVP includes a dashboard for viewing price data and manual scraping capabilities with full internationalization support (Portuguese/English).
+
+# Recent Changes (September 2025)
+
+## Scraping Functionality Implemented
+- **Tesco Handler**: Custom scraping handler for Tesco products registered in RETAILER_HANDLER_REGISTRY
+  - Hybrid approach: tries JSON-LD structured data → CSS selectors → demo fallback
+  - Works with or without cloudscraper/fake-useragent dependencies
+  - Demo mode with 3 real Tesco products (tissue products) for testing
+- **Demo Data**: Created 3 SKUs and listings for demonstration (TESCO-001, TESCO-002, TESCO-003)
+- **Template Fix**: Corrected home view to properly display latest prices for each SKU
+
+## i18n System Fixes
+- Fixed language toggle persistence using localStorage synchronized with server
+- Resolved Chart.js rendering issues with Portuguese number format (comma decimals)
+- Bootstrap script ensures language consistency between URL and displayed content
 
 # User Preferences
 
