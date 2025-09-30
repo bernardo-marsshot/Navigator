@@ -11,6 +11,13 @@ import requests
 from bs4 import BeautifulSoup
 from django.db import transaction
 
+try:
+    import cloudscraper
+    from fake_useragent import UserAgent
+    CLOUDSCRAPER_AVAILABLE = True
+except ImportError:
+    CLOUDSCRAPER_AVAILABLE = False
+
 from .models import Retailer, SKUListing, PricePoint
 
 # -------- Configurações globais --------
@@ -34,6 +41,14 @@ DEFAULT_DELAY_SEC = (0.8, 1.8)
 # Key: domínio (ex.: "amazon.co.uk"), Value: callable(listing) -> dict|None
 RETAILER_HANDLER_REGISTRY: Dict[str, Callable[[SKUListing],
                                               Optional[dict]]] = {}
+
+# Função para registrar handlers após serem definidos
+def _register_handlers():
+    """Registra handlers específicos após serem definidos"""
+    RETAILER_HANDLER_REGISTRY.update({
+        "www.tesco.com": scrape_tesco,
+        "tesco.com": scrape_tesco,
+    })
 
 
 # -------- Utils --------
@@ -151,6 +166,124 @@ def scrape_via_selectors(listing: SKUListing) -> Optional[dict]:
     }
 
 
+# -------- Tesco Handler (search-based) --------
+def scrape_tesco(listing: SKUListing) -> Optional[dict]:
+    """
+    Handler específico para Tesco usando pesquisa em vez de página direta.
+    URLs diretas do Tesco são frequentemente bloqueadas, então pesquisamos pelo produto.
+    """
+    if not CLOUDSCRAPER_AVAILABLE:
+        return {
+            "status": "failed",
+            "error": "cloudscraper not installed",
+            "url": listing.url
+        }
+    
+    try:
+        # Extrair ID do produto da URL para match preciso
+        product_id = listing.url.rstrip('/').split('/')[-1]
+        
+        # Termos de pesquisa baseados no nome do SKU
+        search_terms = ["toilet tissue", "tissue paper", "toilet paper"]
+        if hasattr(listing.sku, 'name'):
+            sku_words = listing.sku.name.lower().split()
+            if any(word in sku_words for word in ['andrex', 'cushelle', 'tesco']):
+                search_terms.insert(0, ' '.join(sku_words[:2]))
+        
+        scraper = cloudscraper.create_scraper()
+        ua = UserAgent()
+        
+        scraper.headers.update({
+            'User-Agent': ua.chrome,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en;q=0.5',
+            'DNT': '1',
+        })
+        
+        # Tentar múltiplos termos de pesquisa
+        for search_term in search_terms[:2]:  # Limitar a 2 tentativas
+            try:
+                url = f"https://www.tesco.com/groceries/en-GB/search?query={search_term.replace(' ', '+')}"
+                response = scraper.get(url, timeout=20)
+                
+                if response.status_code != 200:
+                    continue
+                
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Procurar produtos na página de resultados
+                products = soup.select('li[class*="product-list"], div[class*="product-tile"], article')
+                
+                for product_elem in products[:50]:  # Limitar verificação
+                    # Procurar link do produto
+                    link = product_elem.select_one('a[href*="/products/"]')
+                    if not link:
+                        continue
+                    
+                    href = link.get('href', '')
+                    # Match pelo ID do produto
+                    if product_id not in href:
+                        continue
+                    
+                    # Extrair título
+                    title_elem = product_elem.select_one('h3, [class*="title"], [data-auto*="title"]')
+                    title = title_elem.get_text(strip=True) if title_elem else ""
+                    
+                    # Extrair preço - tentar múltiplos seletores
+                    price_text = ""
+                    price_selectors = [
+                        '[data-auto*="price-value"]',
+                        '[class*="price"]',
+                        'span.value',
+                        'p[class*="price"]'
+                    ]
+                    
+                    for selector in price_selectors:
+                        price_elem = product_elem.select_one(selector)
+                        if price_elem:
+                            price_text = price_elem.get_text(strip=True)
+                            break
+                    
+                    if not price_text:
+                        continue
+                    
+                    # Parse do preço
+                    cur_sym, price = parse_price(price_text)
+                    
+                    if price and price > 0 and title:
+                        return {
+                            "status": "success",
+                            "url": listing.url,
+                            "retailer": "Tesco",
+                            "title": title[:250],
+                            "price": price,
+                            "promo_price": None,
+                            "promo_text": "",
+                            "currency": cur_sym or "£",
+                            "snapshot": f"Found via search: {search_term} | {price_text}",
+                            "method": "tesco_search"
+                        }
+                
+                # Delay entre pesquisas
+                time.sleep(2)
+                
+            except Exception as e:
+                continue
+        
+        return {
+            "status": "failed",
+            "error": f"Product {product_id} not found in search results",
+            "url": listing.url
+        }
+        
+    except Exception as e:
+        return {
+            "status": "failed",
+            "error": str(e),
+            "url": listing.url
+        }
+
+
 # -------- Handler dispatcher --------
 def scrape_listing(listing: SKUListing) -> Optional[dict]:
     """
@@ -231,3 +364,7 @@ def run_scrape_for_all_active(
             _rand_delay(rate_limit)
 
     return created
+
+
+# Registrar handlers ao carregar módulo
+_register_handlers()
