@@ -629,20 +629,15 @@ def discover_and_add_products(search_term: str = "paper tissue", max_products: i
 
 
 def run_scrape_for_all_active() -> int:
+    """
+    Scrape prices for all active SKU listings.
+    Only updates prices for existing products - does NOT discover new products.
+    For product discovery, use the discover_products management command.
+    """
     count = 0
-
-    # First, discover new products automatically
-    print("=== Discovering new products ===")
-    discovery_result = discover_and_add_products(search_term="paper tissue", max_products=5)
-    print(f"Discovered: {discovery_result['added']} new products, {discovery_result['scraped']} prices")
-    count += discovery_result['scraped']
-
-    # Then scrape existing listings for price updates
-    print("=== Updating prices for existing products ===")
     qs = SKUListing.objects.select_related("retailer").filter(is_active=True, retailer__is_active=True)
     for listing in qs:
         pp = scrape_listing(listing)
         if pp:
             count += 1
-
     return count
