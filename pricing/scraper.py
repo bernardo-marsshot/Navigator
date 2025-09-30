@@ -67,15 +67,94 @@ def fetch(url: str) -> Optional[str]:
     except Exception:
         return None
 
+def scrape_tesco_product_selenium(url: str) -> Optional[Dict[str, Any]]:
+    """Scrape individual Tesco product page using Selenium (JS rendering required)"""
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        
+        options = Options()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        
+        driver = webdriver.Chrome(options=options)
+        driver.get(url)
+        
+        # Wait for price to load
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-auto='price-value'], .price, .product-price"))
+            )
+        except:
+            pass
+        
+        # Try multiple price selectors
+        price_text = None
+        price_selectors = [
+            "[data-auto='price-value']",
+            ".beans__price-value",
+            ".price-per-sellable-unit",
+            ".price",
+            ".product-price"
+        ]
+        
+        for selector in price_selectors:
+            try:
+                elem = driver.find_element(By.CSS_SELECTOR, selector)
+                price_text = elem.text.strip()
+                if price_text and ('£' in price_text or price_text.replace('.', '').isdigit()):
+                    break
+            except:
+                continue
+        
+        driver.quit()
+        
+        if price_text:
+            cur_sym, price_decimal = parse_price(price_text if '£' in price_text else f'£{price_text}')
+            if price_decimal:
+                return {
+                    'price': str(price_decimal),
+                    'currency': cur_sym or '£',
+                    'price_text': price_text
+                }
+        
+        return None
+        
+    except Exception as e:
+        print(f"Selenium scraping failed: {e}")
+        return None
+
 def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
     if not listing.is_active or not listing.retailer.is_active:
         return None
     selectors = getattr(listing.retailer, "selectors", None)
     if not selectors:
         return None
+    
+    # Tesco requires Selenium because prices are rendered client-side
+    if listing.retailer.name == "Tesco":
+        tesco_data = scrape_tesco_product_selenium(listing.url)
+        if tesco_data:
+            pp = PricePoint.objects.create(
+                sku_listing=listing,
+                price=Decimal(tesco_data['price']),
+                raw_currency=tesco_data['currency'],
+                raw_snapshot=f"Selenium: {tesco_data['price_text']}"
+            )
+            time.sleep(random.uniform(1.0, 2.0))  # Longer delay for Selenium
+            return pp
+        return None
+    
+    # Other retailers: use standard fetch
     html = fetch(listing.url)
     if not html:
         return None
+    
     soup = BeautifulSoup(html, "html.parser")
     price_el = soup.select_one(selectors.price_selector)
     promo_price_el = soup.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
