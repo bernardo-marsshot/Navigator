@@ -8,24 +8,22 @@
   <title>{% trans "Navigator UK Market Intelligence (MVP)" %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- i18n bootstrap: always sync with server (server is authoritative) -->
+
+  <!-- i18n bootstrap: server é sempre fonte de verdade -->
   <script>
-    (function() {
+    (function () {
       const serverLang = '{{ LANGUAGE_CODE|default:"pt" }}';
       const storedLang = localStorage.getItem('navigator-lang');
-      
-      // Server language is always authoritative - sync localStorage if different
-      if (storedLang !== serverLang) {
-        localStorage.setItem('navigator-lang', serverLang);
-      }
-      
+      if (storedLang !== serverLang) localStorage.setItem('navigator-lang', serverLang);
+      window.serverLang = serverLang;
       window.currentLang = serverLang;
       document.documentElement.setAttribute('lang', serverLang);
     })();
   </script>
+
   <style>
     :root {
-      --navigator-orange: #FF6B35;
+      --navigator-orange: #C6744A;
       --navigator-orange-light: #FF8A65;
       --navigator-orange-dark: #E55722;
       --navigator-coral: #FF7961;
@@ -35,14 +33,14 @@
     }
 
     body {
-      background-color: var(--navigator-white);
+      margin: 0;
       color: var(--navigator-black);
     }
 
     nav {
       background: var(--navigator-orange);
       margin-bottom: 2rem;
-      border-radius: 0.5rem;
+
     }
 
     .nav-inner {
@@ -52,18 +50,7 @@
       width: 100%;
     }
 
-    nav ul li strong,
-    nav ul li a {
-      color: var(--navigator-white);
-      text-decoration: none;
-    }
-
-    nav ul li a:hover {
-      color: #f0f0f0;
-    }
-
     .navigator-logo {
-      height: auto;
       width: 10%;
       margin-right: 1rem;
       vertical-align: middle;
@@ -78,10 +65,14 @@
     h5,
     h6 {
       color: var(--navigator-orange);
+      background-color: var(--navigator-white);
+      border: 1px solid var(--navigator-black);
+      padding: 0.5rem;
+      border-radius: 0.5rem;
     }
 
     table th {
-      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral));
+      background: var(--navigator-orange);
       color: var(--navigator-white);
     }
 
@@ -111,247 +102,70 @@
 
     .footer {
       margin-top: 0;
-      padding: 2rem 0 1rem 0;
+      padding: 2rem 0 1rem;
       border-top: 2px solid var(--navigator-orange);
-      background-color: #2c2c2c;
-      color: var(--navigator-white);
+      background: #2c2c2c;
+      color: #fff;
       text-align: center;
-      font-size: 0.9rem;
+      font-size: .9rem;
     }
 
     .footer a {
       color: var(--navigator-orange);
-      text-decoration: none;
     }
 
     .footer a:hover {
       text-decoration: underline;
     }
 
-    /* Botões (igual ao teu anterior, mantive tudo) */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0.75rem 1.5rem;
-      font-size: 0.875rem;
+      padding: .75rem 1.5rem;
+      font-size: .875rem;
       font-weight: 500;
       line-height: 1.2;
-      text-decoration: none;
       border: none;
-      border-radius: 0.5rem;
+      border-radius: .5rem;
       cursor: pointer;
-      transition: all 0.2s ease-in-out;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      white-space: nowrap;
+      transition: all .2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .1);
       position: relative;
       overflow: hidden;
     }
 
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      text-decoration: none;
-    }
-
-    .btn:active {
-      transform: translateY(0);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn:focus {
-      outline: 2px solid var(--navigator-orange);
-      outline-offset: 2px;
-    }
-
     .btn-primary {
-      background: linear-gradient(135deg, var(--navigator-orange), var(--navigator-coral));
-      color: var(--navigator-white);
+      background: var(--navigator-orange);
+      color: #fff;
       border: 1px solid var(--navigator-orange);
     }
 
     .btn-primary:hover {
       background: linear-gradient(135deg, var(--navigator-orange-dark), var(--navigator-orange));
-      color: var(--navigator-white);
       border-color: var(--navigator-orange-dark);
     }
 
     .btn-secondary {
-      background: var(--navigator-white);
+      background: #fff;
       color: var(--navigator-orange);
       border: 1.5px solid var(--navigator-orange);
     }
 
     .btn-secondary:hover {
       background: var(--navigator-orange);
-      color: var(--navigator-white);
-    }
-
-    .btn-info {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      color: var(--navigator-white);
-      border: 1px solid #3b82f6;
-    }
-
-    .btn-info:hover {
-      background: linear-gradient(135deg, #1d4ed8, #1e40af);
-      color: var(--navigator-white);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: var(--navigator-white);
-      border: 1px solid #10b981;
-    }
-
-    .btn-success:hover {
-      background: linear-gradient(135deg, #059669, #047857);
-      color: var(--navigator-white);
-    }
-
-    .btn-warning {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: var(--navigator-white);
-      border: 1px solid #f59e0b;
-    }
-
-    .btn-warning:hover {
-      background: linear-gradient(135deg, #d97706, #b45309);
-      color: var(--navigator-white);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: var(--navigator-white);
-      border: 1px solid #ef4444;
-    }
-
-    .btn-danger:hover {
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      color: var(--navigator-white);
-    }
-
-    .btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.75rem;
-      border-radius: 0.375rem;
-    }
-
-    .btn-lg {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      border-radius: 0.75rem;
-    }
-
-    .btn-icon {
-      padding: 0.75rem;
-      border-radius: 50%;
-      width: 2.75rem;
-      height: 2.75rem;
-    }
-
-    .btn-icon.btn-sm {
-      padding: 0.5rem;
-      width: 2rem;
-      height: 2rem;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      box-shadow: none;
-      border: 1.5px solid var(--navigator-orange);
-      color: var(--navigator-orange);
-    }
-
-    .btn-ghost:hover {
-      background: rgba(255, 107, 53, 0.1);
-      transform: none;
-      box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
-    }
-
-    .btn-link {
-      background: none;
-      border: none;
-      color: var(--navigator-orange);
-      box-shadow: none;
-      padding: 0.5rem 0.75rem;
-      text-decoration: underline;
-      text-decoration-color: transparent;
-      transition: text-decoration-color 0.2s;
-    }
-
-    .btn-link:hover {
-      background: rgba(255, 107, 53, 0.05);
-      text-decoration-color: var(--navigator-orange);
-      transform: none;
-      box-shadow: none;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-group {
-      display: inline-flex;
-      border-radius: 0.5rem;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-group .btn {
-      border-radius: 0;
-      border-right: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: none;
-    }
-
-    .btn-group .btn:first-child {
-      border-top-left-radius: 0.5rem;
-      border-bottom-left-radius: 0.5rem;
-    }
-
-    .btn-group .btn:last-child {
-      border-top-right-radius: 0.5rem;
-      border-bottom-right-radius: 0.5rem;
-      border-right: none;
-    }
-
-    .btn-fab {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      border-radius: 50%;
-      width: 3.5rem;
-      height: 3.5rem;
-      z-index: 1000;
-      box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
-    }
-
-    .btn-fab:hover {
-      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
-    }
-
-    .table-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
+      color: #fff;
     }
 
     .nav-title {
-      color: var(--navigator-white) !important;
+      color: #fff !important;
       margin: auto;
       text-align: center;
-      width: 75%;
+      width: 100%;
+      background-color: var(--navigator-orange) !important;
+      border: 0px;
     }
 
-    .table-actions .btn {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.75rem;
-    }
-
-    /* Layout structure for white content area and dark footer */
     html,
     body {
       height: 100%;
@@ -363,130 +177,156 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background-color: var(--navigator-white);
+
+      /* Imagem de fundo */
+      background-image: url('/static/background.jpg');
+      /* substitui pelo caminho da tua imagem */
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center;
     }
 
     .content-wrapper {
       flex: 1;
-      background-color: var(--navigator-white);
-      padding: 0 1rem 2rem 1rem;
+      padding: 1rem 1rem 2rem;
       margin-bottom: 2rem;
+      border-radius: 8px;
+      /* destaca sobre o fundo */
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
-    /* Ensure content containers have white backgrounds */
     .container {
-      background-color: var(--navigator-white);
       padding: 0 1rem;
+      border-radius: 4px;
     }
 
-    /* Override Pico table styling to ensure white backgrounds */
-    table {
-      background-color: var(--navigator-white) !important;
-    }
-
+    table,
     table tr {
-      background-color: var(--navigator-white) !important;
+      background: #fff !important;
     }
 
     table tr:nth-child(even) {
-      background-color: #f8f9fa !important;
+      background: #f8f9fa !important;
     }
   </style>
 </head>
 
 <body>
+
   <div class="page-wrapper">
+    <nav>
+      <div class="nav-inner">
+        <img src="/static/navigator-logo.png" alt="{% trans 'Navigator Logo' %}" class="navigator-logo">
+        <h2 class="nav-title">NaviPrice.AI</h2>
+        <!-- Language selector -->
+        <select id="langToggle" style="
+              width: auto;                /* adapta à largura do texto */
+              min-width: 120px;           /* evita encolher demasiado */
+              background: var(--navigator-orange);
+              color: #fff;
+              margin: auto;
+              font-size: 0.9rem;
+              padding: 0.35rem 2rem 0.35rem 0.75rem;
+              border: 1px solid var(--navigator-white);
+              border-radius: 2rem;
+              appearance: none;
+              -webkit-appearance: none;
+              -moz-appearance: none;
+              background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22%3E%3Cpath fill=%22%23fff%22 d=%22M1 1l5 5 5-5%22/%3E%3C/svg%3E');
+              background-repeat: no-repeat;
+              background-position: right 0.75rem center;
+              background-size: 12px 8px;
+            ">
+          <option value="pt" style="color:var(--navigator-white);">🇵🇹 Português</option>
+          <option value="en" style="color:var(--navigator-white);">🇬🇧 English</option>
+        </select>
+
+      </div>
+    </nav>
     <div class="content-wrapper">
-      <main class="container">
-        <nav>
-          <div class="nav-inner">
-            <img src="/static/navigator-logo.png" alt="{% trans 'Navigator Logo' %}" class="navigator-logo">
-            <h2 class="nav-title">NaviPrice.AI</h2>
-            <!-- Language selector with localStorage persistence -->
-            <select id="langToggle" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem;">
-              <option value="pt" style="color: black;">🇵🇹 Português</option>
-              <option value="en" style="color: black;">🇬🇧 English</option>
-            </select>
-          </div>
-        </nav>
 
-        <!-- Django Messages -->
-        {% if messages %}
-        <div style="margin-bottom: 1rem;">
-          {% for message in messages %}
-          <div style="padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 0.375rem; 
-                      {% if message.tags == 'success' %}background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;
-                      {% elif message.tags == 'error' %}background-color: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;
-                      {% elif message.tags == 'info' %}background-color: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd;
-                      {% else %}background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db;{% endif %}">
-            {{ message }}
-          </div>
-          {% endfor %}
+
+      {% if messages %}
+      <div style="margin-bottom:1rem;">
+        {% for message in messages %}
+        <div style="padding:.75rem; margin-bottom:.5rem; border-radius:.375rem;
+                      {% if message.tags == 'success' %}background:#d1fae5; color:#065f46; border:1px solid #a7f3d0;
+                      {% elif message.tags == 'error' %}background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;
+                      {% elif message.tags == 'info' %}background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd;
+                      {% else %}background:#f3f4f6; color:#374151; border:1px solid #d1d5db;{% endif %}">
+          {{ message }}
         </div>
-        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
 
-        {% block content %}{% endblock %}
-      </main>
+      {% block content %}{% endblock %}
     </div>
     <footer class="footer">
-      {% trans "Prototype developed by" %} <strong>Mars Shot - Redefining Limits</strong> | <a href="https://www.marsshot.eu"
-        target="_blank">www.marsshot.eu</a>
+      {% trans "Prototype developed by" %} <strong>Mars Shot - Redefining Limits</strong> | <a
+        href="https://www.marsshot.eu" target="_blank">www.marsshot.eu</a>
     </footer>
   </div>
 
-  <!-- i18n toggle handler: change language without full reload -->
+  <!-- i18n toggle handler -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function getCsrfToken() {
+      const fromTpl = '{{ csrf_token }}';
+      if (fromTpl && fromTpl !== 'NOTPROVIDED' && !/\{\{.+\}\}/.test(fromTpl)) return fromTpl;
+      const m = document.cookie.match(/(?:^|;)\s*csrftoken=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function computeNextForLang(newLang) {
+      const url = new URL(window.location.href);
+      const parts = url.pathname.split('/');
+      if (['en', 'pt'].includes(parts[1])) {
+        parts[1] = newLang;
+      } else {
+        parts.splice(1, 0, newLang);
+      }
+      url.pathname = parts.join('/').replace(/\/{2,}/g, '/');
+      return url.pathname + url.search + url.hash;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
       const langToggle = document.getElementById('langToggle');
-      
-      // Set toggle to match current language
-      langToggle.value = window.currentLang;
-      
-      langToggle.addEventListener('change', function() {
+      langToggle.value = window.serverLang;
+
+      langToggle.addEventListener('change', function () {
         const newLang = this.value;
-        const currentLang = window.currentLang;
-        
-        if (newLang === currentLang) return;
-        
+        const serverLang = window.serverLang;
+        if (newLang === serverLang) return;
+
         localStorage.setItem('navigator-lang', newLang);
         window.currentLang = newLang;
         document.documentElement.setAttribute('lang', newLang);
-        
-        // Update page content via Django set_language endpoint
+
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = "{% url 'set_language' %}";
-        
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = '{{ csrf_token }}';
-        
-        const langInput = document.createElement('input');
-        langInput.type = 'hidden';
-        langInput.name = 'language';
-        langInput.value = newLang;
-        
-        const nextInput = document.createElement('input');
-        nextInput.type = 'hidden';
-        nextInput.name = 'next';
-        nextInput.value = window.location.pathname;
-        
-        form.appendChild(csrfInput);
-        form.appendChild(langInput);
-        form.appendChild(nextInput);
-        
-        // Notify chart about language change before form submit
-        if (window.rebuildChart) {
-          window.rebuildChart(newLang);
-        }
-        
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden'; csrf.name = 'csrfmiddlewaretoken'; csrf.value = getCsrfToken();
+
+        const lang = document.createElement('input');
+        lang.type = 'hidden'; lang.name = 'language'; lang.value = newLang;
+
+        const next = document.createElement('input');
+        next.type = 'hidden'; next.name = 'next'; next.value = computeNextForLang(newLang);
+
+        form.appendChild(csrf);
+        form.appendChild(lang);
+        form.appendChild(next);
+
+        if (window.rebuildChart) window.rebuildChart(newLang);
+
         document.body.appendChild(form);
         form.submit();
       });
     });
   </script>
-
 </body>
 
 </html>

@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.i18n import i18n_patterns
@@ -15,5 +14,5 @@ urlpatterns += i18n_patterns(
     path("", views.home, name="home"),
     path("sku/<int:pk>/", views.sku_detail, name="sku_detail"),
     path("scrape-now/", views.scrape_now, name="scrape_now"),
-    prefix_default_language=False,  # Don't add /pt/ for default language
+    prefix_default_language=True,  # Don't add /pt/ for default language
 )

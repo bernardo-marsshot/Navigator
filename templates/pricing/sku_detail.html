@@ -8,17 +8,23 @@
     <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.name }}</p>
   </div>
   <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-    <a href="/" class="btn btn-ghost btn-sm">
-      <span style="margin-right: 0.5rem;">← </span>
-      {% trans "Back" %}
+    <a href="{% url 'home' %}"
+       style="display:inline-flex; align-items:center; gap:0.5rem;
+              padding:0.5rem 1rem; font-size:0.875rem; font-weight:500;
+              color:var(--navigator-orange); border:1.5px solid var(--navigator-orange);
+              border-radius:0.5rem; background:transparent; text-decoration:none;
+              cursor:pointer; transition:all 0.2s ease-in-out;">
+      <span>←</span>
+      <span>{% trans "Back" %}</span>
     </a>
+
     <button onclick="window.print()" class="btn btn-secondary btn-sm">
       <span style="margin-right: 0.5rem;">🖨️</span>
       {% trans "Print" %}
     </button>
     <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
       {% csrf_token %}
-      <button type="submit" class="btn btn-success btn-sm">
+      <button type="submit" class="btn btn-success btn-sm" style="background-color: green;!important; color: white;">
         <span style="margin-right: 0.5rem;">🔄</span>
         {% trans "Update Data" %}
       </button>
