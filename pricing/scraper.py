@@ -43,7 +43,7 @@ REALISTIC_HEADERS = {
     "DNT": "1",
 }
 
-CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{2})?)", re.UNICODE)
+CURRENCY_REGEX = re.compile(r"(?:Â)?([£$€])\s*([0-9]+(?:[.,][0-9]{2})?)", re.UNICODE)
 
 def parse_price(text: str) -> Tuple[Optional[str], Optional[Decimal]]:
     if not text:
@@ -86,7 +86,7 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     
     # Find all £X.XX patterns in the HTML
     price_patterns = [
-        r'£\s*([0-9]+\.[0-9]{2})',  # £3.15
+        r'(?:Â)?£\s*([0-9]+\.[0-9]{2})',  # £3.15 or Â£3.15 (encoding issue)
         r'&pound;\s*([0-9]+\.[0-9]{2})',  # &pound;3.15
         r'["\']price["\']:\s*([0-9]+\.[0-9]{2})',  # "price": 3.15
     ]
