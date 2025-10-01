@@ -853,19 +853,42 @@ def run_scrape_for_all_active() -> int:
     Scrape prices for all active SKU listings.
     Only updates prices for existing products - does NOT discover new products.
     For product discovery, use the discover_products management command.
+    
+    Saves scraping results to 'extração.json' file.
     """
+    import json
+    from datetime import datetime
+    
     count = 0
-    qs = SKUListing.objects.select_related("retailer").filter(is_active=True, retailer__is_active=True)
+    scraping_results = []
+    
+    qs = SKUListing.objects.select_related("retailer", "sku").filter(is_active=True, retailer__is_active=True)
+    
     for listing in qs:
+        result_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'retailer': listing.retailer.name,
+            'product': listing.sku.name,
+            'url': listing.url,
+            'status': 'failed',
+            'price': None,
+            'currency': None,
+            'error': None
+        }
+        
         try:
             print(f"\n🔍 Scraping: {listing.retailer.name} - {listing.sku.name}")
             print(f"   URL: {listing.url}")
             pp = scrape_listing(listing)
             if pp:
                 print(f"✅ Success: {pp.raw_currency}{pp.price}")
+                result_entry['status'] = 'success'
+                result_entry['price'] = float(pp.price)
+                result_entry['currency'] = pp.raw_currency
                 count += 1
             else:
                 print(f"❌ Failed: No price extracted")
+                result_entry['error'] = 'No price extracted'
         except Exception as e:
             print(f"❌ Exception while scraping listing {listing.id}:")
             print(f"   Retailer: {listing.retailer.name}")
@@ -874,4 +897,22 @@ def run_scrape_for_all_active() -> int:
             print(f"Error: {type(e).__name__}: {e}")
             print("Traceback:")
             traceback.print_exc()
+            result_entry['error'] = f"{type(e).__name__}: {str(e)}"
+        
+        scraping_results.append(result_entry)
+    
+    # Save results to JSON file
+    json_filename = 'extração.json'
+    try:
+        with open(json_filename, 'w', encoding='utf-8') as f:
+            json.dump({
+                'scraping_date': datetime.now().isoformat(),
+                'total_scraped': count,
+                'total_attempts': len(scraping_results),
+                'results': scraping_results
+            }, f, ensure_ascii=False, indent=2)
+        print(f"\n💾 Results saved to '{json_filename}'")
+    except Exception as e:
+        print(f"\n⚠️ Error saving to JSON: {e}")
+    
     return count
