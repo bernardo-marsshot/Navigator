@@ -908,7 +908,7 @@ def run_scrape_for_all_active() -> int:
     from datetime import datetime
     
     count = 0
-    scraping_results = []
+    scraping_results = {}
     
     qs = SKUListing.objects.select_related("retailer", "sku").filter(is_active=True, retailer__is_active=True)
     
@@ -957,7 +957,7 @@ def run_scrape_for_all_active() -> int:
             traceback.print_exc()
             result_entry['error'] = f"{type(e).__name__}: {str(e)}"
         
-        scraping_results.append(result_entry)
+        scraping_results[listing.sku.name] = result_entry
     
     # Save results to JSON file
     json_filename = 'extração.json'

@@ -41,6 +41,7 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 
 ## JSON Export (October 2025)
 - **Scraping Results Export**: All scraping data automatically saved to `extração.json`
+  - **Format**: Dictionary with product names as keys (not array)
   - Includes: timestamp, retailer, product, URL, status, price, currency, error details
   - **Raw Information**: Full HTML source of each scraped page (null for failed scrapes)
   - Comprehensive summary: scraping_date, total_scraped, total_attempts
