@@ -38,11 +38,16 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - 4 UK retailers configured: Tesco, Sainsbury's, Asda, Morrisons
 - Each with CSS selectors for price extraction
 - Scraping uses cloudscraper + fallback regex for robust price extraction
-- **Tesco has inconsistent anti-bot protection**: Sometimes works (£1.55 extracted successfully), sometimes blocks with 403 Forbidden
-  - Uses cloudscraper with realistic headers and 2-4s delays
-  - Detection for 403/error pages with clear reporting
-  - May require commercial scraping API (ScrapingBee, ZenRows) for 100% reliability
-- Morrisons, Sainsbury's, Asda: Work consistently with cloudscraper + fallback regex
+
+### Retailer Status (October 2025)
+- ✅ **Morrisons**: £3.60 - Works consistently with cloudscraper
+- ✅ **Tesco**: £1.55 - Selector updated to `.ddsweb-price__container p.ddsweb-text`
+  - Inconsistent anti-bot: Sometimes 403, sometimes works
+  - CURRENCY_REGEX handles "Â£" encoding issue
+- ⚠️ **Sainsbury's**: Blocked with 403 Forbidden (anti-bot protection)
+- ❌ **Asda**: HTML retrieved but prices load via JavaScript (React/Next.js)
+  - Static HTML scraping cannot extract prices
+  - Requires Selenium/Playwright for JS rendering or commercial API
 
 # User Preferences
 
