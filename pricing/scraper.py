@@ -205,12 +205,18 @@ def scrape_with_selenium(url: str) -> Optional[str]:
         traceback.print_exc()
         return None
 
-def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
+def scrape_listing(listing: SKUListing) -> Optional[tuple]:
+    """
+    Scrape a listing and return (PricePoint, raw_html) tuple.
+    Returns None if scraping fails.
+    """
     if not listing.is_active or not listing.retailer.is_active:
         return None
     selectors = getattr(listing.retailer, "selectors", None)
     if not selectors:
         return None
+    
+    raw_html = None
     
     # Use cloudscraper for all retailers (Selenium doesn't work in Replit environment)
     try:
@@ -243,6 +249,7 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
             html = None
         else:
             html = response.text
+            raw_html = html  # Store raw HTML for JSON export
         
         if html:
             print(f"   Cloudscraper got {len(html)} bytes (status {response.status_code})")
@@ -256,6 +263,7 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
                 'interstitial' in html_lower):
                 print(f"⚠️ Challenge/error page detected for {listing.url}")
                 html = None
+                raw_html = html  # Update raw_html to None for blocked pages
     except Exception as e:
         print(f"❌ Cloudscraper failed for {listing.url}")
         print(f"Error: {type(e).__name__}: {e}")
@@ -263,6 +271,7 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
         traceback.print_exc()
         print("Falling back to simple fetch...")
         html = fetch(listing.url)
+        raw_html = html  # Store fallback HTML
     
     if not html:
         return None
@@ -303,7 +312,7 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
     )
     # polite delay
     time.sleep(random.uniform(0.5, 1.2))
-    return pp
+    return (pp, raw_html)
 
 def scrape_tesco_search_cloudscraper(search_term: str = "paper tissue") -> List[Dict[str, Any]]:
     """Scrape Tesco search results using cloudscraper to bypass Cloudflare"""
@@ -873,18 +882,21 @@ def run_scrape_for_all_active() -> int:
             'status': 'failed',
             'price': None,
             'currency': None,
-            'error': None
+            'error': None,
+            'raw_information': None
         }
         
         try:
             print(f"\n🔍 Scraping: {listing.retailer.name} - {listing.sku.name}")
             print(f"   URL: {listing.url}")
-            pp = scrape_listing(listing)
-            if pp:
+            scrape_result = scrape_listing(listing)
+            if scrape_result:
+                pp, raw_html = scrape_result
                 print(f"✅ Success: {pp.raw_currency}{pp.price}")
                 result_entry['status'] = 'success'
                 result_entry['price'] = float(pp.price)
                 result_entry['currency'] = pp.raw_currency
+                result_entry['raw_information'] = raw_html
                 count += 1
             else:
                 print(f"❌ Failed: No price extracted")
