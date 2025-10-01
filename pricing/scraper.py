@@ -104,27 +104,45 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     return None
 
 def scrape_with_selenium(url: str) -> Optional[str]:
-    """Scrape URL using Selenium for JavaScript-heavy sites"""
+    """Scrape URL using undetected-chromedriver to bypass anti-bot detection"""
     try:
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        from selenium.webdriver.chrome.service import Service
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.support.ui import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
+        import undetected_chromedriver as uc
         
-        options = Options()
-        options.add_argument('--headless')
+        # Create options for stealth mode
+        options = uc.ChromeOptions()
+        options.add_argument('--headless=new')  # New headless mode (more stable)
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1080')
         options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         
-        driver = webdriver.Chrome(options=options)
+        # Additional stealth settings
+        options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        
+        # Initialize undetected chromedriver
+        driver = uc.Chrome(options=options, use_subprocess=True)
+        
+        # Random delay before loading (human-like)
+        time.sleep(random.uniform(1.0, 2.5))
+        
+        # Load the page
         driver.get(url)
         
-        # Wait up to 15 seconds for page to load
-        time.sleep(3)
+        # Wait with random delay (simulate human reading)
+        time.sleep(random.uniform(3.0, 5.0))
+        
+        # Simulate human-like scrolling
+        try:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight / 3);")
+            time.sleep(random.uniform(0.5, 1.0))
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight / 2);")
+            time.sleep(random.uniform(0.5, 1.0))
+        except:
+            pass
         
         html = driver.page_source
         driver.quit()
@@ -138,7 +156,8 @@ def scrape_with_selenium(url: str) -> Optional[str]:
         if len(html) < 5000:  # Tesco pages are usually >100KB
             print(f"⚠️ Suspiciously small response for {url}")
             return None
-            
+        
+        print(f"✅ Successfully scraped {url} with undetected-chromedriver ({len(html)} bytes)")
         return html
     except Exception as e:
         print(f"Selenium failed: {e}")
