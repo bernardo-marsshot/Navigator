@@ -26,17 +26,22 @@ HEADERS_POOL = [
     {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"},
 ]
 
-TESCO_HEADERS = {
+REALISTIC_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-GB,en;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
     "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
     "Sec-Fetch-Dest": "document",
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
     "Cache-Control": "max-age=0",
+    "DNT": "1",
 }
 
 CURRENCY_REGEX = re.compile(r"([£$€])\s*([0-9]+(?:[.,][0-9]{2})?)", re.UNICODE)
@@ -107,9 +112,21 @@ def scrape_with_selenium(url: str) -> Optional[str]:
     """Scrape URL using undetected-chromedriver to bypass anti-bot detection"""
     try:
         import undetected_chromedriver as uc
+        import subprocess
+        
+        # Find Chrome/Chromium binary path
+        chrome_path = '/nix/store/qa9cnw4v5xkxyip6mb9kxqfq1z4x2dx1-chromium-138.0.7204.100/bin/chromium-browser'
+        try:
+            # Try to get from environment if different
+            result = subprocess.run(['which', 'chromium-browser'], capture_output=True, text=True, timeout=2)
+            if result.returncode == 0 and result.stdout.strip():
+                chrome_path = result.stdout.strip()
+        except:
+            pass
         
         # Create options for stealth mode
         options = uc.ChromeOptions()
+        options.binary_location = chrome_path
         options.add_argument('--headless=new')  # New headless mode (more stable)
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -123,8 +140,26 @@ def scrape_with_selenium(url: str) -> Optional[str]:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         
-        # Initialize undetected chromedriver
-        driver = uc.Chrome(options=options, use_subprocess=True)
+        # Copy chromedriver to writable location (undetected-chromedriver needs to patch it)
+        chromedriver_path = '/tmp/chromedriver/chromedriver'
+        if not os.path.exists(chromedriver_path):
+            try:
+                import shutil
+                os.makedirs(os.path.dirname(chromedriver_path), exist_ok=True)
+                result = subprocess.run(['which', 'chromedriver'], capture_output=True, text=True, timeout=2)
+                if result.returncode == 0 and result.stdout.strip():
+                    shutil.copy(result.stdout.strip(), chromedriver_path)
+                    os.chmod(chromedriver_path, 0o755)
+            except Exception as e:
+                print(f"Warning: Could not copy chromedriver: {e}")
+        
+        # Initialize undetected chromedriver with explicit paths
+        driver = uc.Chrome(
+            options=options,
+            driver_executable_path=chromedriver_path,
+            use_subprocess=False,
+            version_main=138  # Match the installed Chromium version
+        )
         
         # Random delay before loading (human-like)
         time.sleep(random.uniform(1.0, 2.5))
@@ -180,8 +215,13 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
             ua = UserAgent()
             scraper.headers.update({
                 'User-Agent': ua.chrome,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-GB,en;q=0.5',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+                'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
             })
             response = scraper.get(listing.url, timeout=20)
             html = response.text if response.status_code == 200 else None
@@ -235,12 +275,19 @@ def scrape_tesco_search_cloudscraper(search_term: str = "paper tissue") -> List[
         scraper = cloudscraper.create_scraper()
         ua = UserAgent()
 
-        # Set realistic headers
+        # Set realistic headers to bypass anti-bot
         scraper.headers.update({
             'User-Agent': ua.chrome,
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-GB,en;q=0.5',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
             'DNT': '1',
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
