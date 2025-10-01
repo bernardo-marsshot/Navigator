@@ -298,7 +298,9 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
             currency, price, raw_price_text = fallback_result
             raw_snapshot = f"Fallback regex: {raw_price_text}"
         else:
-            return None  # No price found at all
+            # No price found, but return raw_html for analysis
+            time.sleep(random.uniform(0.5, 1.2))
+            return (None, raw_html)
     else:
         raw_snapshot = (raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or "")
 
@@ -892,15 +894,22 @@ def run_scrape_for_all_active() -> int:
             scrape_result = scrape_listing(listing)
             if scrape_result:
                 pp, raw_html = scrape_result
-                print(f"✅ Success: {pp.raw_currency}{pp.price}")
-                result_entry['status'] = 'success'
-                result_entry['price'] = float(pp.price)
-                result_entry['currency'] = pp.raw_currency
-                result_entry['raw_information'] = raw_html
-                count += 1
+                if pp:
+                    # Successfully extracted price
+                    print(f"✅ Success: {pp.raw_currency}{pp.price}")
+                    result_entry['status'] = 'success'
+                    result_entry['price'] = float(pp.price)
+                    result_entry['currency'] = pp.raw_currency
+                    result_entry['raw_information'] = raw_html
+                    count += 1
+                else:
+                    # Got HTML but failed to extract price
+                    print(f"❌ Failed: No price extracted")
+                    result_entry['error'] = 'No price extracted'
+                    result_entry['raw_information'] = raw_html
             else:
-                print(f"❌ Failed: No price extracted")
-                result_entry['error'] = 'No price extracted'
+                print(f"❌ Failed: No HTML retrieved")
+                result_entry['error'] = 'No HTML retrieved'
         except Exception as e:
             print(f"❌ Exception while scraping listing {listing.id}:")
             print(f"   Retailer: {listing.retailer.name}")
