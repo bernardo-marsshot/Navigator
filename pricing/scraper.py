@@ -141,8 +141,6 @@ def scrape_with_selenium(url: str) -> Optional[str]:
         
         # Additional stealth settings
         options.add_argument('--disable-features=IsolateOrigins,site-per-process')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
         
         # Copy chromedriver to writable location (undetected-chromedriver needs to patch it)
         chromedriver_path = '/tmp/chromedriver/chromedriver'
@@ -298,9 +296,48 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
             currency, price, raw_price_text = fallback_result
             raw_snapshot = f"Fallback regex: {raw_price_text}"
         else:
-            # No price found, but return raw_html for analysis
-            time.sleep(random.uniform(0.5, 1.2))
-            return (None, raw_html)
+            # Fallback to Selenium for JavaScript-heavy sites (e.g., Asda)
+            print(f"🌐 Trying Selenium (JavaScript rendering)...")
+            selenium_html = scrape_with_selenium(listing.url)
+            
+            if selenium_html:
+                raw_html = selenium_html  # Update with rendered HTML
+                print(f"   Selenium got {len(selenium_html)} bytes")
+                
+                # Re-parse with BeautifulSoup
+                soup_selenium = BeautifulSoup(selenium_html, "html.parser")
+                
+                # Try CSS selectors again on rendered HTML
+                price_el_selenium = soup_selenium.select_one(selectors.price_selector)
+                promo_price_el_selenium = soup_selenium.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
+                
+                raw_price_text_selenium = price_el_selenium.get_text(strip=True) if price_el_selenium else ""
+                raw_promo_price_text_selenium = promo_price_el_selenium.get_text(strip=True) if promo_price_el_selenium else ""
+                
+                cur_sym, price = parse_price(raw_price_text_selenium)
+                cur_sym2, promo_price = parse_price(raw_promo_price_text_selenium)
+                currency = cur_sym or cur_sym2 or ""
+                
+                # If still no price, try fallback regex on rendered HTML
+                if not price and not promo_price:
+                    fallback_result_selenium = extract_price_from_html_fallback(selenium_html, listing.url)
+                    if fallback_result_selenium:
+                        currency, price, raw_price_text = fallback_result_selenium
+                        raw_snapshot = f"Selenium + Fallback regex: {raw_price_text}"
+                        print(f"✅ Price extracted via Selenium fallback: {currency}{price}")
+                    else:
+                        # No price found even with Selenium
+                        print(f"❌ No price extracted even with JavaScript rendering")
+                        time.sleep(random.uniform(0.5, 1.2))
+                        return (None, raw_html)
+                else:
+                    raw_snapshot = f"Selenium CSS: {raw_price_text_selenium or raw_promo_price_text_selenium}"
+                    print(f"✅ Price extracted via Selenium CSS: {currency}{price or promo_price}")
+            else:
+                # Selenium also failed, return raw_html for analysis
+                print(f"❌ Selenium also failed")
+                time.sleep(random.uniform(0.5, 1.2))
+                return (None, raw_html)
     else:
         raw_snapshot = (raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or "")
 
