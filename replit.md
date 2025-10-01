@@ -27,6 +27,12 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - **Template Dictionary Access**: Fixed home.html price display using `get_item` template tag
   - Prices display correctly in both English and Portuguese
 
+## JSON Export (October 2025)
+- **Scraping Results Export**: All scraping data automatically saved to `extração.json`
+  - Includes: timestamp, retailer, product, URL, status, price, currency, error details
+  - Comprehensive summary: scraping_date, total_scraped, total_attempts
+  - UTF-8 encoding with readable JSON formatting
+
 ## Multi-Retailer Configuration
 - 4 UK retailers configured: Tesco, Sainsbury's, Asda, Morrisons
 - Each with CSS selectors for price extraction

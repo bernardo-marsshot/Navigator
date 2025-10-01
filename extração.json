@@ -1,10 +1,10 @@
 {
-  "scraping_date": "2025-10-01T13:56:45.575311",
-  "total_scraped": 1,
+  "scraping_date": "2025-10-01T13:59:13.333615",
+  "total_scraped": 2,
   "total_attempts": 3,
   "results": [
     {
-      "timestamp": "2025-10-01T13:56:40.398384",
+      "timestamp": "2025-10-01T13:59:06.236779",
       "retailer": "Morrisons",
       "product": "Morrisons Toilet Tissue White 9 Rolls",
       "url": "https://groceries.morrisons.com/products/morrisons-toilet-tissue-white-9-rolls/106634562",
@@ -14,17 +14,17 @@
       "error": null
     },
     {
-      "timestamp": "2025-10-01T13:56:42.180919",
+      "timestamp": "2025-10-01T13:59:07.666891",
       "retailer": "Tesco",
       "product": "Tesco Luxury Soft White Toilet Tissue 4 Rolls",
       "url": "https://www.tesco.com/groceries/en-GB/products/281055580",
-      "status": "failed",
-      "price": null,
-      "currency": null,
-      "error": "No price extracted"
+      "status": "success",
+      "price": 1.55,
+      "currency": "£",
+      "error": null
     },
     {
-      "timestamp": "2025-10-01T13:56:45.293459",
+      "timestamp": "2025-10-01T13:59:12.604989",
       "retailer": "Sainsbury's",
       "product": "Sainsbury's Super Softer Classic Toilet Tissue x9 Rolls",
       "url": "https://www.sainsburys.co.uk/gol-ui/product/sainsburys-super-softer-classic-white-ply-tissue-x2-9-rolls",
