@@ -27,6 +27,18 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - **Template Dictionary Access**: Fixed home.html price display using `get_item` template tag
   - Prices display correctly in both English and Portuguese
 
+## Selenium Fallback System (October 2025)
+- **Automatic JavaScript Rendering**: 3-level fallback system for robust price extraction
+  1. Cloudscraper with CSS selectors (fast, ~2-4s)
+  2. Regex fallback on static HTML
+  3. **Selenium with undetected-chromedriver** (JavaScript rendering, ~10-15s)
+- **When Selenium Triggers**: Automatically when static HTML has no extractable prices
+- **Benefits**:
+  - Extracts prices from React/Next.js sites (Asda £1.35)
+  - Bypasses advanced anti-bot protection (Tesco £1.55)
+  - Saves fully rendered HTML (476-756KB) to JSON for analysis
+- **Compatibility**: Fixed for Chromium 138 (removed incompatible options)
+
 ## JSON Export (October 2025)
 - **Scraping Results Export**: All scraping data automatically saved to `extração.json`
   - Includes: timestamp, retailer, product, URL, status, price, currency, error details
@@ -40,14 +52,16 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - Scraping uses cloudscraper + fallback regex for robust price extraction
 
 ### Retailer Status (October 2025)
-- ✅ **Morrisons**: £3.60 - Works consistently with cloudscraper
-- ✅ **Tesco**: £1.55 - Selector updated to `.ddsweb-price__container p.ddsweb-text`
-  - Inconsistent anti-bot: Sometimes 403, sometimes works
+**Success Rate: 3/4 (75%)**
+
+- ✅ **Morrisons**: £3.60 - Works with cloudscraper (519KB HTML)
+- ✅ **Tesco**: £1.55 - Selenium fallback when cloudscraper blocked (756KB rendered HTML)
+  - CSS selector: `.ddsweb-price__container p.ddsweb-text`
   - CURRENCY_REGEX handles "Â£" encoding issue
-- ⚠️ **Sainsbury's**: Blocked with 403 Forbidden (anti-bot protection)
-- ❌ **Asda**: HTML retrieved but prices load via JavaScript (React/Next.js)
-  - Static HTML scraping cannot extract prices
-  - Requires Selenium/Playwright for JS rendering or commercial API
+- ✅ **Asda**: £1.35 - **Selenium extracts JavaScript-loaded prices** (477KB rendered HTML)
+  - React/Next.js site requires JavaScript rendering
+  - Automatic fallback to Selenium when static scraping fails
+- ❌ **Sainsbury's**: 403 Forbidden (anti-bot blocks initial request)
 
 # User Preferences
 
