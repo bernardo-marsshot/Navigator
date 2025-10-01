@@ -14,13 +14,11 @@ from .models import Retailer, SKUListing, PricePoint, SKU
 
 # Advanced scraping libraries
 import cloudscraper
-from fake_useragent import UserAgent
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+try:
+    from fake_useragent import UserAgent
+    ua = UserAgent()
+except:
+    ua = None  # Fallback to default UA if fake_useragent fails
 
 HEADERS_POOL = [
     {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"},
@@ -214,33 +212,57 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
     if not selectors:
         return None
     
-    # Tesco blocks cloudscraper, use Selenium
-    if listing.retailer.name == "Tesco":
-        html = scrape_with_selenium(listing.url)
-    else:
-        # Other retailers: use cloudscraper
-        try:
-            scraper = cloudscraper.create_scraper()
-            ua = UserAgent()
-            scraper.headers.update({
-                'User-Agent': ua.chrome,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-                'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'none',
-            })
-            response = scraper.get(listing.url, timeout=20)
-            html = response.text if response.status_code == 200 else None
-        except Exception as e:
-            print(f"❌ Cloudscraper failed for {listing.url}")
-            print(f"Error: {type(e).__name__}: {e}")
-            print("Traceback:")
-            traceback.print_exc()
-            print("Falling back to simple fetch...")
-            html = fetch(listing.url)
+    # Use cloudscraper for all retailers (Selenium doesn't work in Replit environment)
+    try:
+        scraper = cloudscraper.create_scraper()
+        # Get User-Agent with fallback
+        user_agent = ua.chrome if ua else 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        scraper.headers.update({
+            'User-Agent': user_agent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+        })
+        
+        # Add random delay for Tesco (be more polite)
+        if listing.retailer.name == "Tesco":
+            time.sleep(random.uniform(2.0, 4.0))
+        
+        response = scraper.get(listing.url, timeout=20)
+        
+        # Check status code
+        if response.status_code == 403:
+            print(f"⚠️ Access denied (403 Forbidden) - anti-bot protection active")
+            html = None
+        elif response.status_code != 200:
+            print(f"⚠️ Got status {response.status_code} (expected 200)")
+            html = None
+        else:
+            html = response.text
+        
+        if html:
+            print(f"   Cloudscraper got {len(html)} bytes (status {response.status_code})")
+            
+            # Check for challenge/blocked/error pages
+            html_lower = html.lower()
+            if ('<title>just a moment' in html_lower or 
+                '<title>attention required' in html_lower or
+                '<title>error</title>' in html_lower or
+                'checking your browser' in html_lower or
+                'interstitial' in html_lower):
+                print(f"⚠️ Challenge/error page detected for {listing.url}")
+                html = None
+    except Exception as e:
+        print(f"❌ Cloudscraper failed for {listing.url}")
+        print(f"Error: {type(e).__name__}: {e}")
+        print("Traceback:")
+        traceback.print_exc()
+        print("Falling back to simple fetch...")
+        html = fetch(listing.url)
     
     if not html:
         return None
@@ -287,11 +309,16 @@ def scrape_tesco_search_cloudscraper(search_term: str = "paper tissue") -> List[
     """Scrape Tesco search results using cloudscraper to bypass Cloudflare"""
     try:
         scraper = cloudscraper.create_scraper()
-        ua = UserAgent()
+        # Get User-Agent with fallback
+        try:
+            from fake_useragent import UserAgent
+            user_agent = UserAgent().chrome
+        except:
+            user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
         # Set realistic headers to bypass anti-bot
         scraper.headers.update({
-            'User-Agent': ua.chrome,
+            'User-Agent': user_agent,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -362,9 +389,16 @@ def scrape_tesco_search_cloudscraper(search_term: str = "paper tissue") -> List[
         return []
 
 def scrape_tesco_search_selenium(search_term: str = "paper tissue") -> List[Dict[str, Any]]:
-    """Scrape Tesco search results using Selenium"""
+    """Scrape Tesco search results using Selenium (fallback only, may not work in all environments)"""
     driver = None
     try:
+        # Local imports to avoid module-level import errors if Selenium not available
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        
         print("Trying Selenium approach...")
 
         # Set up Chrome options
