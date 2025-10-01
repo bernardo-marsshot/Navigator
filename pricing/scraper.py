@@ -4,6 +4,7 @@ import time
 import random
 import json
 import os
+import traceback
 from decimal import Decimal
 from typing import Optional, Tuple, Dict, Any, List
 import requests
@@ -68,8 +69,13 @@ def fetch(url: str) -> Optional[str]:
         resp = requests.get(url, headers=headers, timeout=20)
         if resp.status_code == 200:
             return resp.text
+        print(f"⚠️ fetch() got status {resp.status_code} for {url}")
         return None
-    except Exception:
+    except Exception as e:
+        print(f"❌ fetch() failed for {url}")
+        print(f"Error: {type(e).__name__}: {e}")
+        print("Traceback:")
+        traceback.print_exc()
         return None
 
 def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
@@ -195,7 +201,10 @@ def scrape_with_selenium(url: str) -> Optional[str]:
         print(f"✅ Successfully scraped {url} with undetected-chromedriver ({len(html)} bytes)")
         return html
     except Exception as e:
-        print(f"Selenium failed: {e}")
+        print(f"❌ Selenium scraping failed for {url}")
+        print(f"Error: {type(e).__name__}: {e}")
+        print("Traceback:")
+        traceback.print_exc()
         return None
 
 def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
@@ -225,7 +234,12 @@ def scrape_listing(listing: SKUListing) -> Optional[PricePoint]:
             })
             response = scraper.get(listing.url, timeout=20)
             html = response.text if response.status_code == 200 else None
-        except:
+        except Exception as e:
+            print(f"❌ Cloudscraper failed for {listing.url}")
+            print(f"Error: {type(e).__name__}: {e}")
+            print("Traceback:")
+            traceback.print_exc()
+            print("Falling back to simple fetch...")
             html = fetch(listing.url)
     
     if not html:
@@ -809,7 +823,21 @@ def run_scrape_for_all_active() -> int:
     count = 0
     qs = SKUListing.objects.select_related("retailer").filter(is_active=True, retailer__is_active=True)
     for listing in qs:
-        pp = scrape_listing(listing)
-        if pp:
-            count += 1
+        try:
+            print(f"\n🔍 Scraping: {listing.retailer.name} - {listing.sku.name}")
+            print(f"   URL: {listing.url}")
+            pp = scrape_listing(listing)
+            if pp:
+                print(f"✅ Success: {pp.raw_currency}{pp.price}")
+                count += 1
+            else:
+                print(f"❌ Failed: No price extracted")
+        except Exception as e:
+            print(f"❌ Exception while scraping listing {listing.id}:")
+            print(f"   Retailer: {listing.retailer.name}")
+            print(f"   SKU: {listing.sku.name}")
+            print(f"   URL: {listing.url}")
+            print(f"Error: {type(e).__name__}: {e}")
+            print("Traceback:")
+            traceback.print_exc()
     return count
