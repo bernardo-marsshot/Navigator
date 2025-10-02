@@ -73,7 +73,7 @@ msgstr "Configurar"
 
 #: templates/pricing/home.html:20
 msgid "Scrape Now"
-msgstr "Extrair Agora"
+msgstr "Recolher Dados"
 
 #: templates/pricing/home.html:30
 msgid "SKU"
@@ -156,15 +156,3 @@ msgstr "Nota"
 #: templates/pricing/sku_detail.html:159
 msgid "No promo"
 msgstr "Sem promoção"
-
-#: templates/pricing/sku_detail.html:163
-msgid "Scraped from search"
-msgstr ""
-
-#: templates/pricing/sku_detail.html:165
-msgid "Auto-extracted"
-msgstr ""
-
-#: templates/pricing/sku_detail.html:170
-msgid "No debug info"
-msgstr ""
