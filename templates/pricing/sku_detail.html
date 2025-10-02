@@ -1,276 +1,256 @@
 {% extends "base.html" %}
 {% load i18n %}
+
 {% block content %}
-<div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-  <div style="max-width: 50%;">
-    <h2 style="margin: 0 0 0.5rem 0;">{{ sku.code }}</h2>
-    <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.name }}</p>
-  </div>
-  <div class="action-buttons" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-    <a href="{% url 'home' %}"
-       style="display:inline-flex; align-items:center; gap:0.5rem;
-              padding:0.5rem 1rem; font-size:0.875rem; font-weight:500;
-              color:var(--navigator-orange); border:1.5px solid var(--navigator-orange);
-              border-radius:0.5rem; background:transparent; text-decoration:none;
-              cursor:pointer; transition:all 0.2s ease-in-out;">
-      <span>←</span>
-      <span>{% trans "Back" %}</span>
-    </a>
+<style>
+  /* Esconde botões/ações ao imprimir */
+  @media print {
+    .no-print { display: none !important; }
+  }
 
-    <button onclick="window.print()" class="btn btn-secondary btn-sm">
-      <span style="margin-right: 0.5rem;">📄</span>
-      {% trans "Report" %}
-    </button>
-    <form method="post" action="/scrape-now/" style="display: inline; margin: 0;">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-success btn-sm" style="background-color: green;!important; color: white;">
-        <span style="margin-right: 0.5rem;">🔄</span>
-        {% trans "Update Data" %}
+  /* Ajustes de impressão (A4 portrait) */
+  @media print {
+    @page { size: A4 portrait; margin: 12mm; }
+
+    /* No report, o wrapper não força altura fixa */
+    #chart-wrapper { height: auto !important; }
+
+    /* Canvas ocupa largura, com altura controlada (mantém proporção via JS) */
+    #priceChart { width: 100% !important; max-height: 140mm !important; }
+
+    /* Texto um pouco mais compacto na tabela */
+    table { font-size: 12px; }
+  }
+</style>
+
+<div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2 style="margin: 0 0 0.5rem 0;">{{ sku.code }}</h2>
+      <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.name }}</p>
+    </div>
+
+    <!-- Ações (escondidas no report) -->
+    <div class="no-print" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="{% url 'home' %}"
+         style="display:inline-flex; align-items:center; gap:0.5rem;
+                padding:0.5rem 1rem; font-size:0.875rem; font-weight:500;
+                color:var(--navigator-orange); border:1.5px solid var(--navigator-orange);
+                border-radius:0.5rem; background:transparent; text-decoration:none;
+                cursor:pointer; transition:all 0.2s ease-in-out;">
+        <span>←</span>
+        <span>{% trans "Back" %}</span>
+      </a>
+
+      <button onclick="window.print()" class="btn btn-secondary btn-sm">
+        <span style="margin-right: 0.5rem;">📄</span>
+        {% trans "Report" %}
       </button>
-    </form>
+
+      <form method="post" action="{% url 'scrape_now' %}" style="display: inline; margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success btn-sm" style="background-color: green; color: white;">
+          <span style="margin-right: 0.5rem;">🔄</span>
+          {% trans "Update Data" %}
+        </button>
+      </form>
+    </div>
   </div>
-</div>
 
-<!-- wrapper com altura fixa -->
-<div id="chartWrapper" style="width:100%; height:300px; margin-bottom:2rem;">
-  <canvas id="priceChart" style="width:100%; height:100%;"></canvas>
-</div>
+  <!-- Gráfico -->
+  <div id="chart-wrapper" style="width:100%; height:300px; margin-bottom:2rem;">
+    <canvas id="priceChart" style="width:100%; height:100%;"></canvas>
+  </div>
 
-<!-- Get translated labels FIRST -->
-<script>
-// Get translations from Django
-const translations = {
-  price: '{% trans "Price" %}',
-  time: '{% trans "Time" %}',
-  priceEvolution: '{% trans "Price Evolution by Retailer" %}'
-};
+  <!-- Traduções JS -->
+  <script>
+    const translations = {
+      price: '{% trans "Price" %}',
+      time: '{% trans "Time" %}',
+      priceEvolution: '{% trans "Price Evolution by Retailer" %}'
+    };
 
-// Utility: normalize numeric strings for pt locale (fix comma/dot issue)
-function normalizeNumber(value, lang) {
-  if (value === null || value === undefined || value === 'null') {
-    return null;
-  }
-  
-  let strValue = String(value);
-  
-  // If pt locale and has comma, replace with dot for parsing
-  if (lang === 'pt' && strValue.includes(',')) {
-    strValue = strValue.replace(',', '.');
-  }
-  
-  const parsed = Number(strValue);
-  return isNaN(parsed) ? null : parsed;
-}
-</script>
-
-<script>
-const ctx = document.getElementById('priceChart');
-let chartInstance = null; // Store chart instance for destroy/recreate
-
-// Group data by retailer
-const retailerData = {};
-const allLabels = new Set();
-
-{% for p in price_points %}
-const retailer_{{ forloop.counter }} = "{{ p.sku_listing.retailer.name }}";
-const timestamp_{{ forloop.counter }} = "{{ p.timestamp|date:'Y-m-d H:i' }}";
-const price_{{ forloop.counter }} = normalizeNumber("{{ p.promo_price|default:p.price|default:"null" }}", window.currentLang || 'pt');
-
-if (!retailerData[retailer_{{ forloop.counter }}]) {
-  retailerData[retailer_{{ forloop.counter }}] = {};
-}
-retailerData[retailer_{{ forloop.counter }}][timestamp_{{ forloop.counter }}] = price_{{ forloop.counter }};
-allLabels.add(timestamp_{{ forloop.counter }});
-{% endfor %}
-
-// Convert labels to sorted array
-const labels = Array.from(allLabels).sort();
-
-// Colors for different retailers
-const colors = [
-  '#FF6B35', // Navigator Orange
-  '#FF8A65', // Navigator Orange Light
-  '#4A90E2', // Blue
-  '#50C878', // Green
-  '#FFB347', // Orange
-  '#DA70D6', // Orchid
-  '#40E0D0', // Turquoise
-  '#F0E68C'  // Khaki
-];
-
-// Create datasets for each retailer
-const datasets = [];
-let colorIndex = 0;
-
-for (const retailerName in retailerData) {
-  const data = labels.map(label => retailerData[retailerName][label] || null);
-  
-  datasets.push({
-    label: `${retailerName} (£)`,
-    data: data,
-    borderColor: colors[colorIndex % colors.length],
-    backgroundColor: colors[colorIndex % colors.length] + '20', // 20% opacity
-    fill: false,
-    tension: 0.1,
-    pointRadius: 4,
-    pointHoverRadius: 6
-  });
-  
-  colorIndex++;
-}
-
-// Create chart with safe destroy/recreate
-function createChart() {
-  // Destroy existing chart if it exists
-  if (chartInstance) {
-    chartInstance.destroy();
-    chartInstance = null;
-  }
-  
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { 
-          beginAtZero: false,
-          title: {
-            display: true,
-            text: translations.price + ' (£)'
-          }
-        },
-        x: {
-          title: {
-            display: true,
-            text: translations.time
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top'
-        },
-        title: {
-          display: true,
-          text: translations.priceEvolution
-        }
-      },
-      interaction: {
-        intersect: false,
-        mode: 'index'
-      }
+    // Normaliza números (pt -> vírgula) para parsing JS
+    function normalizeNumber(value, lang) {
+      if (value === null || value === undefined || value === 'null') return null;
+      let strValue = String(value);
+      if (lang === 'pt' && strValue.includes(',')) strValue = strValue.replace(',', '.');
+      const parsed = Number(strValue);
+      return isNaN(parsed) ? null : parsed;
     }
-  });
-}
+  </script>
 
-// Initialize chart
-createChart();
+  <script>
+    const ctx = document.getElementById('priceChart');
+    let chartInstance = null; // guarda instância do Chart
 
-// Global function for language change (called from base.html)
-window.rebuildChart = function(newLang) {
-  // Re-normalize all data with new language
-  for (const retailerName in retailerData) {
-    for (const timestamp in retailerData[retailerName]) {
-      const originalValue = retailerData[retailerName][timestamp];
-      if (originalValue !== null) {
-        retailerData[retailerName][timestamp] = normalizeNumber(originalValue, newLang);
-      }
-    }
-  }
-  
-  // Recreate datasets
-  const newDatasets = [];
-  let colorIndex = 0;
-  
-  for (const retailerName in retailerData) {
-    const data = labels.map(label => retailerData[retailerName][label] || null);
-    
-    newDatasets.push({
-      label: `${retailerName} (£)`,
-      data: data,
-      borderColor: colors[colorIndex % colors.length],
-      backgroundColor: colors[colorIndex % colors.length] + '20',
-      fill: false,
-      tension: 0.1,
-      pointRadius: 4,
-      pointHoverRadius: 6
-    });
-    
-    colorIndex++;
-  }
-  
-  // Update datasets and recreate chart
-  datasets.length = 0;
-  datasets.push(...newDatasets);
-  createChart();
-};
+    // Agrupar por retalhista
+    const retailerData = {};
+    const allLabels = new Set();
 
-// Handle chart resizing for print
-window.addEventListener('beforeprint', function() {
-  const wrapper = document.getElementById('chartWrapper');
-  if (wrapper) {
-    wrapper.style.height = '500px';
-    if (chartInstance) {
-      chartInstance.resize();
-    }
-  }
-});
-
-window.addEventListener('afterprint', function() {
-  const wrapper = document.getElementById('chartWrapper');
-  if (wrapper) {
-    wrapper.style.height = '300px';
-    if (chartInstance) {
-      chartInstance.resize();
-    }
-  }
-});
-</script>
-
-<h3>{% trans "History" %}</h3>
-<div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-  <table style="background-color: var(--navigator-white) !important;">
-    <thead>
-      <tr>
-        <th>{% trans "Date" %}</th>
-        <th>{% trans "Retailer" %}</th>
-        <th>{% trans "Price" %}</th>
-        <th>{% trans "Promo" %}</th>
-        <th>{% trans "Note" %}</th>
-      </tr>
-    </thead>
-    <tbody>
     {% for p in price_points %}
-      <tr style="background-color: var(--navigator-white) !important;">
-        <td>{{ p.timestamp }}</td>
-        <td>{{ p.sku_listing.retailer.name }}</td>
-        <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">{% trans "No data" %}</span>{% endif %}</td>
-        <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">{% trans "No promo" %}</span>{% endif %}</td>
-        <td class="muted">
-          {% if p.raw_snapshot %}
-            {% if 'search_url' in p.raw_snapshot %}
-              <small>{% trans "Scraped from search" %}</small>
-            {% elif 'timestamp' in p.raw_snapshot %}
-              <small>{% trans "Auto-extracted" %}</small>
-            {% else %}
-              {{ p.raw_snapshot|truncatechars:60 }}
-            {% endif %}
-          {% else %}
-            <small>{% trans "No debug info" %}</small>
-          {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-</div>
+      const retailer_{{ forloop.counter }} = "{{ p.sku_listing.retailer.name }}";
+      const timestamp_{{ forloop.counter }} = "{{ p.timestamp|date:'Y-m-d H:i' }}";
+      const price_{{ forloop.counter }} = normalizeNumber("{{ p.promo_price|default:p.price|default:'null' }}", window.currentLang || 'pt');
 
+      if (!retailerData[retailer_{{ forloop.counter }}]) {
+        retailerData[retailer_{{ forloop.counter }}] = {};
+      }
+      retailerData[retailer_{{ forloop.counter }}][timestamp_{{ forloop.counter }}] = price_{{ forloop.counter }};
+      allLabels.add(timestamp_{{ forloop.counter }});
+    {% endfor %}
+
+    // Labels ordenados (tempo)
+    const labels = Array.from(allLabels).sort();
+
+    // Paleta simples (podes trocar para as cores oficiais)
+    const colors = [
+      '#FF6B35', '#FF8A65', '#4A90E2', '#50C878',
+      '#FFB347', '#DA70D6', '#40E0D0', '#F0E68C'
+    ];
+
+    // Constrói datasets por retalhista
+    const datasets = [];
+    let colorIndex = 0;
+    for (const retailerName in retailerData) {
+      const data = labels.map(label => retailerData[retailerName][label] ?? null);
+      const color = colors[colorIndex % colors.length];
+      datasets.push({
+        label: `${retailerName} (£)`,
+        data: data,
+        borderColor: color,
+        backgroundColor: color + '20',
+        fill: false,
+        tension: 0.1,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      });
+      colorIndex++;
+    }
+
+    function createChart() {
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,            // ecrã: usa o wrapper (300px)
+          scales: {
+            y: {
+              beginAtZero: false,
+              title: { display: true, text: translations.price + ' (£)' }
+            },
+            x: {
+              title: { display: true, text: translations.time }
+            }
+          },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            title: { display: true, text: translations.priceEvolution }
+          },
+          interaction: { intersect: false, mode: 'index' }
+        }
+      });
+    }
+
+    // Inicializa gráfico
+    createChart();
+
+    // Alterna opções para impressão (evita achatamento)
+    function setPrintAspectMode(isPrint) {
+      if (!chartInstance) return;
+      chartInstance.options.maintainAspectRatio = isPrint ? true : false; // print: preserva proporção
+      chartInstance.options.plugins.legend.position = isPrint ? 'bottom' : 'top';
+      chartInstance.resize();
+      chartInstance.update('none');
+    }
+
+    // Eventos de impressão (cross-browser)
+    if (window.matchMedia) {
+      try {
+        const mq = window.matchMedia('print');
+        if (mq && mq.addEventListener) {
+          mq.addEventListener('change', e => setPrintAspectMode(e.matches));
+        } else if (mq && mq.addListener) {
+          mq.addListener(e => setPrintAspectMode(e.matches));
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('beforeprint', () => setPrintAspectMode(true));
+    window.addEventListener('afterprint',  () => setPrintAspectMode(false));
+
+    // Suporte à troca de linguagem vinda do base.html
+    window.rebuildChart = function(newLang) {
+      for (const rName in retailerData) {
+        for (const ts in retailerData[rName]) {
+          const originalValue = retailerData[rName][ts];
+          if (originalValue !== null) {
+            retailerData[rName][ts] = normalizeNumber(originalValue, newLang);
+          }
+        }
+      }
+      const newDatasets = [];
+      let idx = 0;
+      for (const rName in retailerData) {
+        const data = labels.map(l => retailerData[rName][l] ?? null);
+        const color = colors[idx % colors.length];
+        newDatasets.push({
+          label: `${rName} (£)`,
+          data,
+          borderColor: color,
+          backgroundColor: color + '20',
+          fill: false,
+          tension: 0.1,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        });
+        idx++;
+      }
+      datasets.length = 0;
+      datasets.push(...newDatasets);
+      createChart();
+    };
+  </script>
+
+  <h3>{% trans "History" %}</h3>
+  <div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+    <table style="background-color: var(--navigator-white) !important; width: 100%;">
+      <thead>
+        <tr>
+          <th>{% trans "Date" %}</th>
+          <th>{% trans "Retailer" %}</th>
+          <th>{% trans "Price" %}</th>
+          <th>{% trans "Promo" %}</th>
+          <th>{% trans "Note" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in price_points %}
+        <tr style="background-color: var(--navigator-white) !important;">
+          <td>{{ p.timestamp }}</td>
+          <td>{{ p.sku_listing.retailer.name }}</td>
+          <td>{% if p.price %}{{ p.price }}{% else %}<span class="muted">{% trans "No data" %}</span>{% endif %}</td>
+          <td>{% if p.promo_price %}{{ p.promo_price }} ({{ p.promo_text }}){% else %}<span class="muted">{% trans "No promo" %}</span>{% endif %}</td>
+          <td class="muted">
+            {% if p.raw_snapshot %}
+              {% if 'search_url' in p.raw_snapshot %}
+                <small>{% trans "Scraped from search" %}</small>
+              {% elif 'timestamp' in p.raw_snapshot %}
+                <small>{% trans "Auto-extracted" %}</small>
+              {% else %}
+                {{ p.raw_snapshot|truncatechars:60 }}
+              {% endif %}
+            {% else %}
+              <small>{% trans "No debug info" %}</small>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
 {% endblock %}
