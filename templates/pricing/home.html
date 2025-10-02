@@ -36,19 +36,19 @@
         <th style="padding:8px 12px; border:1px solid #ddd;"></th>
       </tr>
     </thead>
-    <tbody style="background-color:#ffffff !important; color:#000000 !important;">
+    <tbody style="background-color:#ffffff !important;">
       {% for sku in skus %}
       <tr>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {{ sku.code }}
         </td>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {{ sku.name }}
         </td>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp and latest_pp.price %}
           {{ latest_pp.price }}
@@ -58,7 +58,7 @@
           {% endwith %}
         </td>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp and latest_pp.promo_price %}
           {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
@@ -68,13 +68,13 @@
           {% endwith %}
         </td>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {% with latest_pp=latest|get_item:sku.id %}
           {% if latest_pp %}{{ latest_pp.raw_currency }}{% endif %}
           {% endwith %}
         </td>
         <td
-          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:#000000 !important;">
+          style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           <div class="table-actions">
             <a href="{% url 'sku_detail' sku.id %}"
               style="background-color:#999999 !important; white-space: nowrap; color:#ffffff !important; padding:4px 8px; text-decoration:none; border-radius:4px; font-size:0.875rem;">
