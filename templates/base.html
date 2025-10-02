@@ -216,6 +216,12 @@
       .action-buttons {
         display: none !important;
       }
+
+      /* Ensure chart displays fully in PDF - increase height for print */
+      #chartWrapper {
+        height: 500px !important;
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>

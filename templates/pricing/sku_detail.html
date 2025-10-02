@@ -33,7 +33,7 @@
 </div>
 
 <!-- wrapper com altura fixa -->
-<div style="width:100%; height:300px; margin-bottom:2rem;">
+<div id="chartWrapper" style="width:100%; height:300px; margin-bottom:2rem;">
   <canvas id="priceChart" style="width:100%; height:100%;"></canvas>
 </div>
 
@@ -211,6 +211,27 @@ window.rebuildChart = function(newLang) {
   datasets.push(...newDatasets);
   createChart();
 };
+
+// Handle chart resizing for print
+window.addEventListener('beforeprint', function() {
+  const wrapper = document.getElementById('chartWrapper');
+  if (wrapper) {
+    wrapper.style.height = '500px';
+    if (chartInstance) {
+      chartInstance.resize();
+    }
+  }
+});
+
+window.addEventListener('afterprint', function() {
+  const wrapper = document.getElementById('chartWrapper');
+  if (wrapper) {
+    wrapper.style.height = '300px';
+    if (chartInstance) {
+      chartInstance.resize();
+    }
+  }
+});
 </script>
 
 <h3>{% trans "History" %}</h3>
