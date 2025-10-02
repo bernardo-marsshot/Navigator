@@ -2,7 +2,7 @@
 
 Navigator UK Market Intelligence is a Django-based web scraping platform designed for competitive price monitoring across UK retailers. The system allows users to configure CSS selectors for different retailers and automatically scrape product prices, building a historical database of pricing trends and promotional activities. The MVP includes a dashboard for viewing price data and manual scraping capabilities with full internationalization (PT/EN) and automated product discovery.
 
-# Recent Changes (September 2025)
+# Recent Changes (October 2025)
 
 ## Product Discovery System
 - **Automated Discovery Command**: `discover_products` management command for automatic product finding
@@ -46,6 +46,21 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - **Raw Information**: Full HTML source of each scraped page (null for failed scrapes)
   - Comprehensive summary: scraping_date, total_scraped, total_attempts
   - UTF-8 encoding with readable JSON formatting
+
+## PDF Report Styling (October 2025)
+- **Clean Print Layout**: CSS @media print rules for professional PDF generation
+  - Hides navigation bar (removes top title "Navigator UK Market Intelligence")
+  - Hides all action buttons (Voltar/Back, Relatório/Report, Atualizar Dados/Update Data)
+  - Hides footer with developer link (www.marsshot.eu)
+  - Removes browser-generated headers/footers (date, time, URL) via @page margin reset
+  - Removes background image for clean white PDF
+  - PDF contains only essential content: product info, price chart, and historical data table
+
+## Translation Updates (October 2025)
+- **Portuguese Localization**: Updated "Scrape Now" button translation
+  - Changed from "Extrair Agora" to "Recolher Dados" (more natural Portuguese)
+  - Fixed duplicate msgid compilation errors in locale/pt/LC_MESSAGES/django.po
+  - Clean compilation of .mo files for both PT and EN locales
 
 ## Multi-Retailer Configuration
 - 4 UK retailers configured: Tesco, Sainsbury's, Asda, Morrisons
