@@ -212,32 +212,9 @@
 
     /* Print styles for clean PDF reports */
     @media print {
-      /* Remove browser-generated headers/footers (date, time, URL) */
-      @page {
-        margin: 0;
-      }
-
-      /* Hide action buttons */
+      /* Hide action buttons only */
       .action-buttons {
         display: none !important;
-      }
-
-      /* Hide footer */
-      .footer {
-        display: none !important;
-      }
-
-      /* Remove page background for printing */
-      .page-wrapper {
-        background-image: none !important;
-        background-color: white !important;
-      }
-
-      /* Ensure content takes full width */
-      .content-wrapper {
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 1rem !important;
       }
     }
   </style>

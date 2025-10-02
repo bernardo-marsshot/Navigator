@@ -49,12 +49,10 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 
 ## PDF Report Styling (October 2025)
 - **Clean Print Layout**: CSS @media print rules for professional PDF generation
-  - Hides navigation bar (logo, title "Navigator UK Market Intelligence", language selector)
   - Hides all action buttons (Voltar/Back, Relatório/Report, Atualizar Dados/Update Data)
+  - Keeps navigation bar (logo, title, language selector) visible in PDF
   - Keeps footer with developer link (www.marsshot.eu) visible in PDF
-  - Removes browser-generated headers/footers (date, time, URL) via @page margin reset
-  - Removes background image for clean white PDF
-  - PDF contains: product info, price chart, historical data table, and footer
+  - PDF contains: navigation bar, product info, price chart, historical data table, and footer
 
 ## Translation Updates (October 2025)
 - **Portuguese Localization**: Updated "Scrape Now" button translation
