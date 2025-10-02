@@ -109,8 +109,8 @@ msgid "Back"
 msgstr "Voltar"
 
 #: templates/pricing/sku_detail.html:17
-msgid "Print"
-msgstr "Imprimir"
+msgid "Report"
+msgstr "Relatorio"
 
 #: templates/pricing/sku_detail.html:23
 msgid "Update Data"

@@ -109,8 +109,8 @@ msgid "Back"
 msgstr "Back"
 
 #: templates/pricing/sku_detail.html:17
-msgid "Print"
-msgstr "Print"
+msgid "Report"
+msgstr "Report"
 
 #: templates/pricing/sku_detail.html:23
 msgid "Update Data"
