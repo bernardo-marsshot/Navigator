@@ -218,9 +218,11 @@
         display: none !important;
       }
 
-      /* Ensure chart displays fully in PDF - increase height for print */
+      /* Ensure chart displays fully in PDF - reduce width and increase height */
       #chartWrapper {
+        width: 85% !important;
         height: 500px !important;
+        margin: 0 auto 2rem auto !important;
         page-break-inside: avoid;
       }
     }
