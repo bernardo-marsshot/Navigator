@@ -178,11 +178,8 @@ def generate_pdf_report(request, pk):
         <meta charset="utf-8">
         <style>
             @page {{
-                size: A4 landscape;
+                size: A4 portrait;
                 margin: 15mm;
-            }}
-            @page :first {{
-                size: A4 landscape;
             }}
             body {{
                 font-family: Arial, sans-serif;
@@ -196,17 +193,18 @@ def generate_pdf_report(request, pk):
             .header h1 {{
                 color: #C6744A;
                 margin: 0;
-                font-size: 28px;
+                font-size: 24px;
             }}
             .header p {{
                 color: #6b7280;
                 margin: 5px 0;
-                font-size: 16px;
+                font-size: 14px;
             }}
             .chart-container {{
                 width: 100%;
                 text-align: center;
                 page-break-after: always;
+                margin-bottom: 20px;
             }}
             .chart-container img {{
                 max-width: 100%;
@@ -218,7 +216,7 @@ def generate_pdf_report(request, pk):
             }}
             h2 {{
                 color: #C6744A;
-                font-size: 22px;
+                font-size: 20px;
                 margin-bottom: 15px;
             }}
             table {{
@@ -229,14 +227,14 @@ def generate_pdf_report(request, pk):
             th {{
                 background: #C6744A;
                 color: white;
-                padding: 10px;
+                padding: 8px;
                 text-align: left;
-                font-size: 14px;
+                font-size: 12px;
             }}
             td {{
-                padding: 8px;
+                padding: 6px;
                 border-bottom: 1px solid #ddd;
-                font-size: 12px;
+                font-size: 11px;
             }}
             tr:nth-child(even) {{
                 background-color: #f8f9fa;
