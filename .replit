@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["chromedriver", "chromium", "geckodriver", "gettext", "gitFull", "playwright-driver", "xcodebuild", "zlib"]
+packages = ["cairo", "chromedriver", "chromium", "ffmpeg-full", "fontconfig", "freetype", "geckodriver", "gettext", "ghostscript", "gitFull", "glib", "gobject-introspection", "gtk3", "harfbuzz", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "pango", "pkg-config", "playwright-driver", "qhull", "tcl", "tk", "xcodebuild", "zlib"]
 
 [workflows]
 runButton = "Project"

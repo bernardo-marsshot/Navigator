@@ -6,8 +6,18 @@ from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.template.loader import render_to_string
 from .models import SKU, PricePoint
 from .scraper import run_scrape_for_all_active
+
+import io
+import base64
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
+import matplotlib.dates as mdates
+from weasyprint import HTML, CSS
 
 
 def home(request):
@@ -99,3 +109,108 @@ def update_data(request, product_id):
         messages.error(request,
                        _("Error updating data: %(error)s") % {'error': str(e)})
         return redirect("home")
+
+
+def generate_pdf_report(request, pk):
+    """Gera um PDF profissional com o gráfico de evolução de preços"""
+    sku = get_object_or_404(SKU, pk=pk)
+    price_points = PricePoint.objects.filter(
+        sku_listing__sku=sku
+    ).select_related(
+        "sku_listing", "sku_listing__retailer"
+    ).order_by("timestamp")
+    
+    retailer_data = {}
+    for p in price_points:
+        retailer_name = p.sku_listing.retailer.name
+        if retailer_name not in retailer_data:
+            retailer_data[retailer_name] = {'timestamps': [], 'prices': []}
+        retailer_data[retailer_name]['timestamps'].append(p.timestamp)
+        price = float(p.promo_price) if p.promo_price else float(p.price)
+        retailer_data[retailer_name]['prices'].append(price)
+    
+    fig, ax = plt.subplots(figsize=(14, 8))
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('white')
+    
+    colors = ['#FF6B35', '#FF8A65', '#4A90E2', '#50C878', '#FFB347', '#DA70D6', '#40E0D0', '#F0E68C']
+    
+    for idx, (retailer_name, data) in enumerate(retailer_data.items()):
+        color = colors[idx % len(colors)]
+        ax.plot(data['timestamps'], data['prices'], 
+                marker='o', linewidth=2.5, markersize=8,
+                label=f'{retailer_name} (£)', color=color)
+    
+    ax.set_xlabel('', fontsize=14, fontweight='bold')
+    ax.set_ylabel('Preço (£)', fontsize=16, fontweight='bold')
+    ax.set_title(_('Price Evolution by Retailer'), fontsize=20, fontweight='bold', pad=20)
+    ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
+    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.tick_params(axis='both', labelsize=12)
+    
+    plt.xticks([])
+    plt.tight_layout(pad=2)
+    
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+    buffer.seek(0)
+    image_base64 = base64.b64encode(buffer.read()).decode()
+    plt.close()
+    
+    html_content = f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{
+                size: A4 landscape;
+                margin: 15mm;
+            }}
+            body {{
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+            }}
+            .header {{
+                text-align: center;
+                margin-bottom: 30px;
+            }}
+            .header h1 {{
+                color: #C6744A;
+                margin: 0;
+                font-size: 28px;
+            }}
+            .header p {{
+                color: #6b7280;
+                margin: 5px 0;
+                font-size: 16px;
+            }}
+            .chart-container {{
+                width: 100%;
+                text-align: center;
+            }}
+            .chart-container img {{
+                max-width: 100%;
+                height: auto;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>{sku.name}</h1>
+            <p>SKU: {sku.code}</p>
+        </div>
+        <div class="chart-container">
+            <img src="data:image/png;base64,{image_base64}" alt="Price Chart">
+        </div>
+    </body>
+    </html>
+    '''
+    
+    pdf_file = HTML(string=html_content).write_pdf()
+    
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{sku.code}_relatorio.pdf"'
+    
+    return response

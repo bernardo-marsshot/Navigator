@@ -66,10 +66,10 @@
         <span>{% trans "Back" %}</span>
       </a>
 
-      <button onclick="window.print()" class="btn btn-secondary btn-sm">
+      <a href="{% url 'pdf_report' sku.pk %}" class="btn btn-secondary btn-sm" style="text-decoration: none;">
         <span style="margin-right: 0.5rem;">📄</span>
         {% trans "Report" %}
-      </button>
+      </a>
 
 <!-- Botão de atualização de dados 
       <form method="post" action="{% url 'scrape_now' %}" style="display: inline; margin: 0;">
