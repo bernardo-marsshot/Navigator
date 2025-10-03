@@ -29,9 +29,10 @@
 
     /* Canvas ocupa espaço disponível na página landscape */
     #priceChart { 
-      width: 95% !important; 
-      height: 85vh !important;
+      width: 100% !important; 
+      height: 100% !important;
       max-width: 100% !important;
+      max-height: 100% !important;
     }
 
     /* Tabela em páginas portrait */
@@ -160,19 +161,32 @@
         data: { labels, datasets },
         options: {
           responsive: true,
-          maintainAspectRatio: false,            // ecrã: usa o wrapper (300px)
+          maintainAspectRatio: false,
+          layout: {
+            padding: 20
+          },
           scales: {
             y: {
               beginAtZero: false,
-              title: { display: true, text: translations.price + ' (£)' }
+              title: { display: true, text: translations.price + ' (£)', font: { size: 16 } },
+              ticks: { font: { size: 14 } }
             },
             x: {
-              title: { display: true, text: translations.time }
+              display: false
             }
           },
           plugins: {
-            legend: { display: true, position: 'top' },
-            title: { display: true, text: translations.priceEvolution }
+            legend: { 
+              display: true, 
+              position: 'top',
+              labels: { font: { size: 16 }, padding: 15 }
+            },
+            title: { 
+              display: true, 
+              text: translations.priceEvolution,
+              font: { size: 20 },
+              padding: 20
+            }
           },
           interaction: { intersect: false, mode: 'index' }
         }
@@ -181,29 +195,6 @@
 
     // Inicializa gráfico
     createChart();
-
-    // Alterna opções para impressão (evita achatamento)
-    function setPrintAspectMode(isPrint) {
-      if (!chartInstance) return;
-      chartInstance.options.maintainAspectRatio = isPrint ? true : false; // print: preserva proporção
-      chartInstance.options.plugins.legend.position = isPrint ? 'bottom' : 'top';
-      chartInstance.resize();
-      chartInstance.update('none');
-    }
-
-    // Eventos de impressão (cross-browser)
-    if (window.matchMedia) {
-      try {
-        const mq = window.matchMedia('print');
-        if (mq && mq.addEventListener) {
-          mq.addEventListener('change', e => setPrintAspectMode(e.matches));
-        } else if (mq && mq.addListener) {
-          mq.addListener(e => setPrintAspectMode(e.matches));
-        }
-      } catch (e) {}
-    }
-    window.addEventListener('beforeprint', () => setPrintAspectMode(true));
-    window.addEventListener('afterprint',  () => setPrintAspectMode(false));
 
     // Suporte à troca de linguagem vinda do base.html
     window.rebuildChart = function(newLang) {
