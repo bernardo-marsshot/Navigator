@@ -27,8 +27,8 @@
 
   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h2 style="margin: 0 0 0.5rem 0;">{{ sku.code }}</h2>
-      <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.name }}</p>
+      <h2 style="margin: 0 0 0.5rem 0;">{{ sku.name }}</h2>
+      <p style="margin: 0; color: var(--navigator-grey); font-size: 1.1rem;">{{ sku.code }}</p>
     </div>
 
     <!-- Ações (escondidas no report) -->
@@ -48,13 +48,15 @@
         {% trans "Report" %}
       </button>
 
+<!-- Botão de atualização de dados 
       <form method="post" action="{% url 'scrape_now' %}" style="display: inline; margin: 0;">
         {% csrf_token %}
         <button type="submit" class="btn btn-success btn-sm" style="background-color: green; color: white;">
           <span style="margin-right: 0.5rem;">🔄</span>
           {% trans "Update Data" %}
         </button>
-      </form>
+      </form> 
+-->
     </div>
   </div>
 
