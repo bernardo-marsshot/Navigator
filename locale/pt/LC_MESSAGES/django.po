@@ -153,8 +153,16 @@ msgstr "Retalhista"
 msgid "Note"
 msgstr "Nota"
 
+#: templates/pricing/sku_detail.html:149
+msgid "Promotion"
+msgstr "Promoção"
+
 #: templates/pricing/sku_detail.html:159
 msgid "No promo"
+msgstr "Sem promoção"
+
+#: pricing/views.py
+msgid "No promotion"
 msgstr "Sem promoção"
 
 #: pricing/views.py
