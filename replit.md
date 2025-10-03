@@ -37,17 +37,19 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
      - Per-retailer persistent scrapers maintain Cloudflare clearance
   2. **Regex + JSON extraction** on static HTML
      - JSON-LD structured data (`application/ld+json`)
-     - React state parsing (`window.__PRELOADED_STATE__` for Sainsbury's)
+     - React state parsing (`window.__PRELOADED_STATE__`) - Sainsbury's only
   3. **httpx with HTTP/2** (modern protocol, shares cookies from step 1)
   4. **Selenium with undetected-chromedriver** (JavaScript rendering, ~10-15s)
+     - **Intelligent Selenium fallback**: Automatically triggers when static HTML fails to extract prices
 - **Session Persistence**: Single scraper instance per retailer across requests
   - Reuses cookies to avoid repeated Cloudflare challenges
   - Significantly reduces 403 Forbidden errors
 - **Cookie Sharing**: httpx inherits Cloudflare clearance from cloudscraper
+- **Retailer-Specific Logic**: JSON extraction limited to Sainsbury's to prevent false positives
 - **Benefits**:
-  - Extracts prices from React/Next.js sites (Asda £1.35)
+  - Extracts prices from React/Next.js sites (ASDA £1.35)
   - Bypasses advanced anti-bot protection (Tesco £1.55)
-  - Handles JSON-based pricing (Sainsbury's)
+  - Intelligent Selenium fallback when static scraping insufficient
   - Saves fully rendered HTML (476-756KB) to JSON for analysis
 - **Compatibility**: Fixed for Chromium 138 (removed incompatible options)
 
@@ -87,7 +89,7 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - Scraping uses cloudscraper + fallback regex for robust price extraction
 
 ### Retailer Status (October 2025)
-**Target Success Rate: 4/4 (100%)** with new fallback improvements
+**Current Success Rate: 3/4 (75%)**
 
 - ✅ **Morrisons**: £3.60 - Works reliably with persistent cloudscraper (519KB HTML)
 - ✅ **Tesco**: £1.55 - **Improved reliability** with persistent session + exponential backoff
@@ -95,13 +97,14 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - CURRENCY_REGEX handles "Â£" encoding issue
   - 3-attempt retry with delays (2s, 4s, 8s) reduces 403 errors
   - Falls back to httpx/Selenium if needed
-- ✅ **Asda**: £1.35 - **Selenium extracts JavaScript-loaded prices** (477KB rendered HTML)
+- ✅ **ASDA**: £1.35 - **Selenium extracts JavaScript-loaded prices** (477KB rendered HTML)
   - React/Next.js site requires JavaScript rendering
   - Automatic fallback to Selenium when static scraping fails
-- 🔄 **Sainsbury's**: **Improved with JSON extraction**
-  - New `window.__PRELOADED_STATE__` parser extracts prices from React state
-  - Falls back to JSON-LD structured data if needed
-  - Should now extract prices even when CSS selectors fail
+  - JSON extraction limited to Sainsbury's only (prevents ASDA breakage)
+- ❌ **Sainsbury's**: 403 Forbidden + no price data in HTML
+  - All methods blocked (cloudscraper, httpx, Selenium)
+  - Selenium-rendered HTML lacks price metadata
+  - Requires alternative approach (network call interception or different URL strategy)
 
 # User Preferences
 

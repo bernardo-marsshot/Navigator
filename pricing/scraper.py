@@ -193,10 +193,11 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     """
     import re
     
-    # First try JSON extraction (better for modern sites)
-    json_price = extract_price_from_json(html, url)
-    if json_price:
-        return json_price
+    # Try JSON extraction ONLY for Sainsbury's (to avoid breaking ASDA)
+    if 'sainsburys' in url.lower():
+        json_price = extract_price_from_json(html, url)
+        if json_price:
+            return json_price
     
     # Find all £X.XX patterns in the HTML
     price_patterns = [
@@ -458,6 +459,9 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
     raw_price_text = ""
     raw_promo_text = ""
     
+    # Track which method succeeded (important for ASDA fallback logic)
+    used_selenium = False
+    
     # If cloudscraper failed, try httpx/selenium fallbacks immediately
     if not html:
         print(f"🔄 Cloudscraper exhausted, trying fallback methods...")
@@ -475,6 +479,7 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
             html = scrape_with_selenium(listing.url)
             if html:
                 raw_html = html
+                used_selenium = True
                 print(f"   Selenium got {len(html)} bytes")
         
         # If all methods failed, return None
@@ -510,10 +515,44 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
             raw_snapshot = f"Fallback (JSON/regex): {raw_price_text}"
             print(f"✅ Price extracted via fallback: {currency}{price}")
         else:
-            # No price found
-            print(f"❌ No price extracted from HTML")
-            time.sleep(random.uniform(0.5, 1.2))
-            return (None, raw_html)
+            # No price found - if we haven't tried Selenium yet, try it now (important for ASDA)
+            if not used_selenium:
+                print(f"⚠️ No price found in static HTML, trying Selenium as last resort...")
+                selenium_html = scrape_with_selenium(listing.url)
+                if selenium_html:
+                    print(f"   Selenium got {len(selenium_html)} bytes, re-extracting price...")
+                    raw_html = selenium_html
+                    
+                    # Re-parse with Selenium-rendered HTML
+                    soup = BeautifulSoup(selenium_html, "html.parser")
+                    price_el = soup.select_one(selectors.price_selector)
+                    promo_price_el = soup.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
+                    promo_text_el = soup.select_one(selectors.promo_text_selector) if selectors.promo_text_selector else None
+                    
+                    raw_price_text = price_el.get_text(strip=True) if price_el else ""
+                    raw_promo_price_text = promo_price_el.get_text(strip=True) if promo_price_el else ""
+                    raw_promo_text = promo_text_el.get_text(strip=True) if promo_text_el else ""
+                    
+                    cur_sym, price = parse_price(raw_price_text)
+                    cur_sym2, promo_price = parse_price(raw_promo_price_text)
+                    currency = cur_sym or cur_sym2 or ""
+                    
+                    if price or promo_price:
+                        raw_snapshot = f"Selenium: {raw_price_text or ''} | promo: {raw_promo_price_text or ''} | {raw_promo_text or ''}"
+                        print(f"✅ Price extracted via Selenium: {currency}{price}")
+                    else:
+                        # Try fallback extraction on Selenium HTML
+                        fallback_result = extract_price_from_html_fallback(selenium_html, listing.url)
+                        if fallback_result:
+                            currency, price, raw_price_text = fallback_result
+                            raw_snapshot = f"Selenium + Fallback: {raw_price_text}"
+                            print(f"✅ Price extracted via Selenium + fallback: {currency}{price}")
+            
+            # Final check - if still no price, return None
+            if not price and not promo_price:
+                print(f"❌ No price extracted from HTML (tried all methods)")
+                time.sleep(random.uniform(0.5, 1.2))
+                return (None, raw_html)
 
     pp = PricePoint.objects.create(
         sku_listing=listing,
