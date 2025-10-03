@@ -71,9 +71,32 @@
       border-radius: 0.5rem;
     }
 
+    table {
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
     table th {
       background: var(--navigator-orange);
       color: var(--navigator-white);
+    }
+
+    table th:first-child {
+      border-top-left-radius: 0.75rem;
+    }
+
+    table th:last-child {
+      border-top-right-radius: 0.75rem;
+    }
+
+    table tr:last-child td:first-child {
+      border-bottom-left-radius: 0.75rem;
+    }
+
+    table tr:last-child td:last-child {
+      border-bottom-right-radius: 0.75rem;
     }
 
     table tr:nth-child(even) {
