@@ -26,6 +26,9 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - All prices now save correctly with decimals (£3.15 vs £3.00)
 - **Template Dictionary Access**: Fixed home.html price display using `get_item` template tag
   - Prices display correctly in both English and Portuguese
+- **XSS Security**: Fixed HTML injection vulnerability in error messages (October 2025)
+  - Retailer names now escaped with `escape()` before HTML list rendering
+  - Prevents malicious database content from executing scripts
 
 ## Selenium Fallback System (October 2025)
 - **Automatic JavaScript Rendering**: 3-level fallback system for robust price extraction
