@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.utils.translation import gettext as _
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
 from .models import SKU, PricePoint
 from .scraper import run_scrape_for_all_active
 
@@ -50,26 +52,32 @@ def scrape_now(request):
             failed_retailers = result['failed_retailers']
 
             if scraped_count == 0:
-                retailers_text = ', '.join(failed_retailers) if failed_retailers else _("all")
-                messages.error(
-                    request,
-                    _("All %(total)s active listings failed to scrape. Failed retailers: %(retailers)s"
-                      ) % {'total': active_count, 'retailers': retailers_text})
+                if failed_retailers:
+                    retailers_list = ''.join([f'<li>{escape(r)}</li>' for r in failed_retailers])
+                    msg = _("All %(total)s active listings failed to scrape. Failed retailers:") % {'total': active_count}
+                    msg += f'<ul style="margin:0.5rem 0 0 0; padding-left:1.5rem;">{retailers_list}</ul>'
+                else:
+                    msg = _("All %(total)s active listings failed to scrape.") % {'total': active_count}
+                messages.error(request, mark_safe(msg))
             elif scraped_count == active_count:
                 messages.success(
                     request,
                     _("Successfully scraped %(count)s listings!") %
                     {'count': scraped_count})
             else:
-                retailers_text = ', '.join(failed_retailers) if failed_retailers else _("unknown")
-                messages.warning(
-                    request,
-                    _("Scraped %(scraped)s of %(total)s listings. Failed retailers: %(retailers)s"
-                      ) % {
-                          'scraped': scraped_count,
-                          'total': active_count,
-                          'retailers': retailers_text
-                      })
+                if failed_retailers:
+                    retailers_list = ''.join([f'<li>{escape(r)}</li>' for r in failed_retailers])
+                    msg = _("Scraped %(scraped)s of %(total)s listings. Failed retailers:") % {
+                        'scraped': scraped_count,
+                        'total': active_count
+                    }
+                    msg += f'<ul style="margin:0.5rem 0 0 0; padding-left:1.5rem;">{retailers_list}</ul>'
+                else:
+                    msg = _("Scraped %(scraped)s of %(total)s listings.") % {
+                        'scraped': scraped_count,
+                        'total': active_count
+                    }
+                messages.warning(request, mark_safe(msg))
     except Exception as e:
         messages.error(
             request,

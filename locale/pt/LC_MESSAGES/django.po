@@ -158,19 +158,21 @@ msgid "No promo"
 msgstr "Sem promoção"
 
 #: pricing/views.py
-msgid "all"
-msgstr "todos"
-
-#: pricing/views.py
-msgid "unknown"
-msgstr "desconhecido"
+#, python-format
+msgid "All %(total)s active listings failed to scrape. Failed retailers:"
+msgstr "Todas as %(total)s listagens ativas falharam. Retalhistas que falharam:"
 
 #: pricing/views.py
 #, python-format
-msgid "All %(total)s active listings failed to scrape. Failed retailers: %(retailers)s"
-msgstr "Todas as %(total)s listagens ativas falharam. Retalhistas que falharam: %(retailers)s"
+msgid "All %(total)s active listings failed to scrape."
+msgstr "Todas as %(total)s listagens ativas falharam."
 
 #: pricing/views.py
 #, python-format
-msgid "Scraped %(scraped)s of %(total)s listings. Failed retailers: %(retailers)s"
-msgstr "Extraídas %(scraped)s de %(total)s listagens. Retalhistas que falharam: %(retailers)s"
+msgid "Scraped %(scraped)s of %(total)s listings. Failed retailers:"
+msgstr "Extraídas %(scraped)s de %(total)s listagens. Retalhistas que falharam:"
+
+#: pricing/views.py
+#, python-format
+msgid "Scraped %(scraped)s of %(total)s listings."
+msgstr "Extraídas %(scraped)s de %(total)s listagens."
