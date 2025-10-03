@@ -134,12 +134,16 @@ def generate_pdf_report(request, pk):
     
     price_points = list(deduplicated.values())
     
+    # Collect all unique timestamps for X-axis labels
+    all_timestamps = sorted(set(p.timestamp for p in price_points))
+    timestamp_to_index = {ts: i for i, ts in enumerate(all_timestamps)}
+    
     retailer_data = {}
     for p in price_points:
         retailer_name = p.sku_listing.retailer.name
         if retailer_name not in retailer_data:
-            retailer_data[retailer_name] = {'timestamps': [], 'prices': []}
-        retailer_data[retailer_name]['timestamps'].append(p.timestamp)
+            retailer_data[retailer_name] = {'indices': [], 'prices': []}
+        retailer_data[retailer_name]['indices'].append(timestamp_to_index[p.timestamp])
         price = float(p.promo_price) if p.promo_price else float(p.price)
         retailer_data[retailer_name]['prices'].append(price)
     
@@ -150,7 +154,7 @@ def generate_pdf_report(request, pk):
     
     for idx, (retailer_name, data) in enumerate(retailer_data.items()):
         color = colors[idx % len(colors)]
-        ax.plot(data['timestamps'], data['prices'], 
+        ax.plot(data['indices'], data['prices'], 
                 marker='o', linewidth=2, markersize=6,
                 label=f'{retailer_name} (£)', color=color)
     
@@ -164,8 +168,10 @@ def generate_pdf_report(request, pk):
         spine.set_color('#e5e7eb')
         spine.set_linewidth(0.5)
     
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m %H:%M'))
-    plt.xticks(rotation=45, ha='right', fontsize=10, color='#6b7280')
+    # Set X-axis to show all point dates with equal spacing
+    ax.set_xticks(range(len(all_timestamps)))
+    ax.set_xticklabels([ts.strftime('%d/%m %H:%M') for ts in all_timestamps], 
+                       rotation=45, ha='right', fontsize=10, color='#6b7280')
     ax.tick_params(axis='both', colors='#6b7280', labelsize=11)
     ax.tick_params(axis='x', length=0)
     
