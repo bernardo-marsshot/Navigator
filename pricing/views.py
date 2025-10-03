@@ -114,11 +114,25 @@ def update_data(request, product_id):
 def generate_pdf_report(request, pk):
     """Gera um PDF profissional com o gráfico de evolução de preços e tabela"""
     sku = get_object_or_404(SKU, pk=pk)
-    price_points = PricePoint.objects.filter(
+    all_price_points = PricePoint.objects.filter(
         sku_listing__sku=sku
     ).select_related(
         "sku_listing", "sku_listing__retailer"
     ).order_by("timestamp")
+    
+    # Deduplicate: keep only most recent point per day/hour/minute/retailer
+    deduplicated = {}
+    for p in all_price_points:
+        key = (
+            p.timestamp.date(),
+            p.timestamp.hour,
+            p.timestamp.minute,
+            p.sku_listing.retailer.name
+        )
+        if key not in deduplicated or p.timestamp > deduplicated[key].timestamp:
+            deduplicated[key] = p
+    
+    price_points = list(deduplicated.values())
     
     retailer_data = {}
     for p in price_points:
@@ -160,7 +174,7 @@ def generate_pdf_report(request, pk):
     plt.close()
     
     table_rows = ''
-    for p in price_points.order_by('-timestamp'):
+    for p in sorted(price_points, key=lambda x: x.timestamp, reverse=True):
         promo_display = f"{p.promo_price} ({p.promo_text})" if p.promo_price else "Sem promoção"
         table_rows += f'''
         <tr>
@@ -273,6 +287,6 @@ def generate_pdf_report(request, pk):
     pdf_file = HTML(string=html_content).write_pdf()
     
     response = HttpResponse(pdf_file, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{sku.code}_relatorio.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="{sku.code}.pdf"'
     
     return response
