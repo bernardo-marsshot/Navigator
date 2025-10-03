@@ -179,12 +179,15 @@ def generate_pdf_report(request, pk):
     
     table_rows = ''
     for p in sorted(price_points, key=lambda x: x.timestamp, reverse=True):
-        promo_display = f"{p.promo_price} ({p.promo_text})" if p.promo_price else "Sem promoção"
+        # Show promo price if exists, otherwise regular price
+        display_price = f"£{p.promo_price}" if p.promo_price else (f"£{p.price}" if p.price else 'N/A')
+        # Show only promo text if exists
+        promo_display = p.promo_text if p.promo_text else ""
         table_rows += f'''
         <tr>
             <td>{p.timestamp.strftime('%d/%m/%Y %H:%M')}</td>
             <td>{p.sku_listing.retailer.name}</td>
-            <td>{p.price if p.price else 'N/A'}</td>
+            <td>{display_price}</td>
             <td>{promo_display}</td>
         </tr>
         '''
