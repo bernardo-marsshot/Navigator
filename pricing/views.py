@@ -37,7 +37,7 @@ def sku_detail(request, pk):
     sku = get_object_or_404(SKU, pk=pk)
     price_points = PricePoint.objects.filter(
         sku_listing__sku=sku).select_related(
-            "sku_listing", "sku_listing__retailer").order_by("timestamp")
+            "sku_listing", "sku_listing__retailer").order_by("-timestamp")
     return render(request, "pricing/sku_detail.html", {
         "sku": sku,
         "price_points": price_points
@@ -112,7 +112,7 @@ def update_data(request, product_id):
 
 
 def generate_pdf_report(request, pk):
-    """Gera um PDF profissional com o gráfico de evolução de preços"""
+    """Gera um PDF profissional com o gráfico de evolução de preços e tabela"""
     sku = get_object_or_404(SKU, pk=pk)
     price_points = PricePoint.objects.filter(
         sku_listing__sku=sku
@@ -141,14 +141,16 @@ def generate_pdf_report(request, pk):
                 marker='o', linewidth=2.5, markersize=8,
                 label=f'{retailer_name} (£)', color=color)
     
-    ax.set_xlabel('', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Data', fontsize=14, fontweight='bold')
     ax.set_ylabel('Preço (£)', fontsize=16, fontweight='bold')
     ax.set_title(_('Price Evolution by Retailer'), fontsize=20, fontweight='bold', pad=20)
     ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
     ax.grid(True, alpha=0.3, linestyle='--')
-    ax.tick_params(axis='both', labelsize=12)
     
-    plt.xticks([])
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m %H:%M'))
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    ax.tick_params(axis='y', labelsize=12)
+    
     plt.tight_layout(pad=2)
     
     buffer = io.BytesIO()
@@ -156,6 +158,18 @@ def generate_pdf_report(request, pk):
     buffer.seek(0)
     image_base64 = base64.b64encode(buffer.read()).decode()
     plt.close()
+    
+    table_rows = ''
+    for p in price_points.order_by('-timestamp'):
+        promo_display = f"{p.promo_price} ({p.promo_text})" if p.promo_price else "Sem promoção"
+        table_rows += f'''
+        <tr>
+            <td>{p.timestamp.strftime('%d/%m/%Y %H:%M')}</td>
+            <td>{p.sku_listing.retailer.name}</td>
+            <td>{p.price if p.price else 'N/A'}</td>
+            <td>{promo_display}</td>
+        </tr>
+        '''
     
     html_content = f'''
     <!DOCTYPE html>
@@ -167,6 +181,9 @@ def generate_pdf_report(request, pk):
                 size: A4 landscape;
                 margin: 15mm;
             }}
+            @page :first {{
+                size: A4 landscape;
+            }}
             body {{
                 font-family: Arial, sans-serif;
                 margin: 0;
@@ -174,7 +191,7 @@ def generate_pdf_report(request, pk):
             }}
             .header {{
                 text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
             }}
             .header h1 {{
                 color: #C6744A;
@@ -189,10 +206,40 @@ def generate_pdf_report(request, pk):
             .chart-container {{
                 width: 100%;
                 text-align: center;
+                page-break-after: always;
             }}
             .chart-container img {{
                 max-width: 100%;
                 height: auto;
+            }}
+            .table-section {{
+                page-break-before: always;
+                margin-top: 20px;
+            }}
+            h2 {{
+                color: #C6744A;
+                font-size: 22px;
+                margin-bottom: 15px;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }}
+            th {{
+                background: #C6744A;
+                color: white;
+                padding: 10px;
+                text-align: left;
+                font-size: 14px;
+            }}
+            td {{
+                padding: 8px;
+                border-bottom: 1px solid #ddd;
+                font-size: 12px;
+            }}
+            tr:nth-child(even) {{
+                background-color: #f8f9fa;
             }}
         </style>
     </head>
@@ -203,6 +250,23 @@ def generate_pdf_report(request, pk):
         </div>
         <div class="chart-container">
             <img src="data:image/png;base64,{image_base64}" alt="Price Chart">
+        </div>
+        
+        <div class="table-section">
+            <h2>Histórico de Preços</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Retalhista</th>
+                        <th>Preço</th>
+                        <th>Promoção</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {table_rows}
+                </tbody>
+            </table>
         </div>
     </body>
     </html>
