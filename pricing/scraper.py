@@ -112,6 +112,62 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     
     return None
 
+def scrape_with_httpx(url: str) -> Optional[str]:
+    """
+    Third fallback scraping method using httpx with HTTP/2.
+    HTTP/2 can bypass some modern anti-bot systems.
+    """
+    try:
+        import httpx
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0',
+            'DNT': '1',
+        }
+        
+        time.sleep(random.uniform(1.5, 3.0))
+        
+        with httpx.Client(http2=True, follow_redirects=True, timeout=30.0) as client:
+            response = client.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                html = response.text
+                
+                if len(html) < 500:
+                    print(f"⚠️ httpx got suspiciously small response ({len(html)} bytes)")
+                    return None
+                
+                html_lower = html.lower()
+                if ('<title>just a moment' in html_lower or 
+                    '<title>attention required' in html_lower or
+                    'checking your browser' in html_lower):
+                    print(f"⚠️ httpx detected challenge/blocked page")
+                    return None
+                
+                print(f"✅ httpx (HTTP/2) successfully scraped {url} ({len(html)} bytes)")
+                return html
+            else:
+                print(f"⚠️ httpx got status {response.status_code}")
+                return None
+                
+    except ImportError:
+        print(f"⚠️ httpx library not installed, skipping HTTP/2 method")
+        return None
+    except Exception as e:
+        print(f"❌ httpx scraping failed for {url}")
+        print(f"Error: {type(e).__name__}: {e}")
+        return None
+
 def scrape_with_selenium(url: str) -> Optional[str]:
     """Scrape URL using undetected-chromedriver to bypass anti-bot detection"""
     try:
@@ -296,9 +352,41 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
             currency, price, raw_price_text = fallback_result
             raw_snapshot = f"Fallback regex: {raw_price_text}"
         else:
-            # Fallback to Selenium for JavaScript-heavy sites (e.g., Asda)
-            print(f"🌐 Trying Selenium (JavaScript rendering)...")
-            selenium_html = scrape_with_selenium(listing.url)
+            # Try httpx with HTTP/2 (third scraping method)
+            print(f"🔄 Trying httpx with HTTP/2...")
+            httpx_html = scrape_with_httpx(listing.url)
+            
+            if httpx_html:
+                raw_html = httpx_html
+                print(f"   httpx got {len(httpx_html)} bytes")
+                
+                soup_httpx = BeautifulSoup(httpx_html, "html.parser")
+                
+                price_el_httpx = soup_httpx.select_one(selectors.price_selector)
+                promo_price_el_httpx = soup_httpx.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
+                
+                raw_price_text_httpx = price_el_httpx.get_text(strip=True) if price_el_httpx else ""
+                raw_promo_price_text_httpx = promo_price_el_httpx.get_text(strip=True) if promo_price_el_httpx else ""
+                
+                cur_sym, price = parse_price(raw_price_text_httpx)
+                cur_sym2, promo_price = parse_price(raw_promo_price_text_httpx)
+                currency = cur_sym or cur_sym2 or ""
+                
+                if not price and not promo_price:
+                    fallback_result_httpx = extract_price_from_html_fallback(httpx_html, listing.url)
+                    if fallback_result_httpx:
+                        currency, price, raw_price_text = fallback_result_httpx
+                        raw_snapshot = f"httpx + Fallback regex: {raw_price_text}"
+                        print(f"✅ Price extracted via httpx fallback: {currency}{price}")
+                else:
+                    raw_snapshot = f"httpx CSS: {raw_price_text_httpx or raw_promo_price_text_httpx}"
+                    print(f"✅ Price extracted via httpx CSS: {currency}{price or promo_price}")
+            
+            # If httpx also failed, fallback to Selenium for JavaScript-heavy sites (e.g., Asda)
+            selenium_html = None
+            if not httpx_html or (not price and not promo_price):
+                print(f"🌐 Trying Selenium (JavaScript rendering)...")
+                selenium_html = scrape_with_selenium(listing.url)
             
             if selenium_html:
                 raw_html = selenium_html  # Update with rendered HTML

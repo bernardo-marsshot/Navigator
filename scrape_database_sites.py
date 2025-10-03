@@ -268,6 +268,7 @@ def scrape_individual_product_page(url: str, retailer_name: str = "Unknown") -> 
         # Múltiplas tentativas com diferentes estratégias
         strategies = [
             {'method': 'cloudscraper'},
+            {'method': 'httpx_http2'},
             {'method': 'session_requests'},
             {'method': 'simple_requests'}
         ]
@@ -275,6 +276,17 @@ def scrape_individual_product_page(url: str, retailer_name: str = "Unknown") -> 
         for strategy in strategies:
             if strategy['method'] == 'cloudscraper':
                 response = scraper.get(url, timeout=30)
+            elif strategy['method'] == 'httpx_http2':
+                try:
+                    import httpx
+                    with httpx.Client(http2=True, follow_redirects=True, timeout=30.0) as client:
+                        response = client.get(url, headers=scraper.headers)
+                except ImportError:
+                    print(f"⚠️  httpx not installed, skipping HTTP/2 strategy")
+                    continue
+                except Exception as e:
+                    print(f"⚠️  httpx HTTP/2 strategy error: {e}")
+                    continue
             elif strategy['method'] == 'session_requests':
                 session = requests.Session()
                 session.headers.update(scraper.headers)

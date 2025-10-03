@@ -17,3 +17,4 @@ undetected-chromedriver
 pillow
 weasyprint
 matplotlib
+httpx[http2]
