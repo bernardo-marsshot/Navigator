@@ -30,15 +30,24 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - Retailer names now escaped with `escape()` before HTML list rendering
   - Prevents malicious database content from executing scripts
 
-## Selenium Fallback System (October 2025)
-- **Automatic JavaScript Rendering**: 3-level fallback system for robust price extraction
-  1. Cloudscraper with CSS selectors (fast, ~2-4s)
-  2. Regex fallback on static HTML
-  3. **Selenium with undetected-chromedriver** (JavaScript rendering, ~10-15s)
-- **When Selenium Triggers**: Automatically when static HTML has no extractable prices
+## Advanced Scraping System (October 2025)
+- **4-Level Fallback Chain** for maximum reliability:
+  1. **Cloudscraper** with persistent sessions & cookies (fast, ~2-4s)
+     - Exponential backoff retry (3 attempts: 2s, 4s, 8s delays)
+     - Per-retailer persistent scrapers maintain Cloudflare clearance
+  2. **Regex + JSON extraction** on static HTML
+     - JSON-LD structured data (`application/ld+json`)
+     - React state parsing (`window.__PRELOADED_STATE__` for Sainsbury's)
+  3. **httpx with HTTP/2** (modern protocol, shares cookies from step 1)
+  4. **Selenium with undetected-chromedriver** (JavaScript rendering, ~10-15s)
+- **Session Persistence**: Single scraper instance per retailer across requests
+  - Reuses cookies to avoid repeated Cloudflare challenges
+  - Significantly reduces 403 Forbidden errors
+- **Cookie Sharing**: httpx inherits Cloudflare clearance from cloudscraper
 - **Benefits**:
   - Extracts prices from React/Next.js sites (Asda £1.35)
   - Bypasses advanced anti-bot protection (Tesco £1.55)
+  - Handles JSON-based pricing (Sainsbury's)
   - Saves fully rendered HTML (476-756KB) to JSON for analysis
 - **Compatibility**: Fixed for Chromium 138 (removed incompatible options)
 
@@ -78,16 +87,21 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - Scraping uses cloudscraper + fallback regex for robust price extraction
 
 ### Retailer Status (October 2025)
-**Success Rate: 3/4 (75%)**
+**Target Success Rate: 4/4 (100%)** with new fallback improvements
 
-- ✅ **Morrisons**: £3.60 - Works with cloudscraper (519KB HTML)
-- ✅ **Tesco**: £1.55 - Selenium fallback when cloudscraper blocked (756KB rendered HTML)
+- ✅ **Morrisons**: £3.60 - Works reliably with persistent cloudscraper (519KB HTML)
+- ✅ **Tesco**: £1.55 - **Improved reliability** with persistent session + exponential backoff
   - CSS selector: `.ddsweb-price__container p.ddsweb-text`
   - CURRENCY_REGEX handles "Â£" encoding issue
+  - 3-attempt retry with delays (2s, 4s, 8s) reduces 403 errors
+  - Falls back to httpx/Selenium if needed
 - ✅ **Asda**: £1.35 - **Selenium extracts JavaScript-loaded prices** (477KB rendered HTML)
   - React/Next.js site requires JavaScript rendering
   - Automatic fallback to Selenium when static scraping fails
-- ❌ **Sainsbury's**: 403 Forbidden (anti-bot blocks initial request)
+- 🔄 **Sainsbury's**: **Improved with JSON extraction**
+  - New `window.__PRELOADED_STATE__` parser extracts prices from React state
+  - Falls back to JSON-LD structured data if needed
+  - Should now extract prices even when CSS selectors fail
 
 # User Preferences
 
