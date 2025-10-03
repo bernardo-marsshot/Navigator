@@ -143,27 +143,31 @@ def generate_pdf_report(request, pk):
         price = float(p.promo_price) if p.promo_price else float(p.price)
         retailer_data[retailer_name]['prices'].append(price)
     
-    fig, ax = plt.subplots(figsize=(14, 8))
-    fig.patch.set_facecolor('white')
-    ax.set_facecolor('white')
+    fig, ax = plt.subplots(figsize=(14, 8), facecolor='#f9fafb')
+    ax.set_facecolor('#f9fafb')
     
     colors = ['#FF6B35', '#FF8A65', '#4A90E2', '#50C878', '#FFB347', '#DA70D6', '#40E0D0', '#F0E68C']
     
     for idx, (retailer_name, data) in enumerate(retailer_data.items()):
         color = colors[idx % len(colors)]
         ax.plot(data['timestamps'], data['prices'], 
-                marker='o', linewidth=2.5, markersize=8,
+                marker='o', linewidth=2, markersize=6,
                 label=f'{retailer_name} (£)', color=color)
     
-    ax.set_xlabel('Data', fontsize=14, fontweight='bold')
-    ax.set_ylabel('Preço (£)', fontsize=16, fontweight='bold')
-    ax.set_title(_('Price Evolution by Retailer'), fontsize=20, fontweight='bold', pad=20)
-    ax.legend(fontsize=14, loc='upper left', framealpha=0.9)
-    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.set_xlabel('Data', fontsize=12, fontweight='normal', color='#6b7280')
+    ax.set_ylabel('Preço (£)', fontsize=12, fontweight='normal', color='#6b7280')
+    ax.set_title(_('Price Evolution by Retailer'), fontsize=18, fontweight='500', pad=20, color='#374151')
+    ax.legend(fontsize=12, loc='upper left', frameon=False, labelcolor='#374151')
+    ax.grid(color='#e5e7eb', linewidth=0.5, alpha=0.6)
+    
+    for spine in ax.spines.values():
+        spine.set_color('#e5e7eb')
+        spine.set_linewidth(0.5)
     
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m %H:%M'))
-    plt.xticks(rotation=45, ha='right', fontsize=10)
-    ax.tick_params(axis='y', labelsize=12)
+    plt.xticks(rotation=45, ha='right', fontsize=10, color='#6b7280')
+    ax.tick_params(axis='both', colors='#6b7280', labelsize=11)
+    ax.tick_params(axis='x', length=0)
     
     plt.tight_layout(pad=2)
     
@@ -196,9 +200,11 @@ def generate_pdf_report(request, pk):
                 margin: 15mm;
             }}
             body {{
-                font-family: Arial, sans-serif;
+                font-family: 'Helvetica Neue', Arial, sans-serif;
                 margin: 0;
                 padding: 20px;
+                background-color: #f9fafb;
+                color: #111827;
             }}
             .header {{
                 text-align: center;
@@ -207,18 +213,24 @@ def generate_pdf_report(request, pk):
             .header h1 {{
                 color: #C6744A;
                 margin: 0;
-                font-size: 24px;
+                font-size: 22px;
+                font-weight: 500;
             }}
             .header p {{
                 color: #6b7280;
                 margin: 5px 0;
-                font-size: 14px;
+                font-size: 13px;
+                font-weight: normal;
             }}
             .chart-container {{
                 width: 100%;
                 text-align: center;
                 page-break-after: always;
                 margin-bottom: 20px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.75rem;
+                padding: 20px;
             }}
             .chart-container img {{
                 max-width: 100%;
@@ -229,29 +241,39 @@ def generate_pdf_report(request, pk):
                 margin-top: 20px;
             }}
             h2 {{
-                color: #C6744A;
-                font-size: 20px;
+                color: #374151;
+                font-size: 18px;
+                font-weight: 500;
                 margin-bottom: 15px;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 10px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.75rem;
+                overflow: hidden;
             }}
             th {{
-                background: #C6744A;
-                color: white;
-                padding: 8px;
+                background: #f3f4f6;
+                color: #374151;
+                padding: 10px;
                 text-align: left;
                 font-size: 12px;
+                font-weight: 500;
             }}
             td {{
-                padding: 6px;
-                border-bottom: 1px solid #ddd;
+                padding: 8px 10px;
+                border-bottom: 1px solid #e5e7eb;
                 font-size: 11px;
+                color: #374151;
+            }}
+            tr:last-child td {{
+                border-bottom: none;
             }}
             tr:nth-child(even) {{
-                background-color: #f8f9fa;
+                background-color: #f9fafb;
             }}
         </style>
     </head>
@@ -265,7 +287,7 @@ def generate_pdf_report(request, pk):
         </div>
         
         <div class="table-section">
-            <h2>Histórico de Preços</h2>
+            <h2>Histórico</h2>
             <table>
                 <thead>
                     <tr>

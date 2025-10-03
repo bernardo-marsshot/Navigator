@@ -50,17 +50,21 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
   - Comprehensive summary: scraping_date, total_scraped, total_attempts
   - UTF-8 encoding with readable JSON formatting
 
-## PDF Report Styling (October 2025)
-- **Clean Print Layout**: CSS @media print rules + JavaScript for professional PDF generation
-  - Hides all action buttons (Voltar/Back, Relatório/Report, Atualizar Dados/Update Data)
-  - Keeps navigation bar (logo, title, language selector) visible in PDF
-  - Keeps footer with developer link (www.marsshot.eu) visible in PDF
-  - **Chart Resizing for Print**: JavaScript event listeners (`beforeprint`/`afterprint`)
-    - Automatically increases chart height from 300px to 500px when printing
-    - Calls `chartInstance.resize()` to re-render Chart.js canvas at correct size
-    - Ensures all axis labels and data points appear in PDF
-    - Restores original 300px height after printing
-  - PDF contains: navigation bar, product info, full price chart (500px), historical data table, and footer
+## PDF Report System (October 2025)
+- **Server-Generated PDFs**: Professional reports using WeasyPrint and matplotlib
+  - **Two-page portrait layout**: Page 1 (chart with dates), Page 2 (price history table)
+  - **Filename**: Just the SKU code (e.g., `106634562.pdf`)
+  - **Visual Consistency**: Matplotlib styling matches website's Chart.js appearance
+    - Light gray background (#f9fafb) and subtle grid lines
+    - Soft color palette with #e5e7eb borders
+    - Font styling matches web (gray text, medium-weight headers)
+    - Clean, minimalist design aligned with Navigator branding
+- **Data Deduplication**: Shows only most recent price point per day/hour/minute/retailer
+  - Prevents duplicate points when multiple scrapes occur in same minute
+  - Cleaner charts and tables with meaningful data only
+- **Table Ordering**: Most recent data displayed first (descending timestamp)
+  - Applies to both web pages and PDF reports
+  - Consistent user experience across formats
 
 ## Translation Updates (October 2025)
 - **Portuguese Localization**: Updated "Scrape Now" button translation
