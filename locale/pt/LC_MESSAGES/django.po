@@ -156,3 +156,21 @@ msgstr "Nota"
 #: templates/pricing/sku_detail.html:159
 msgid "No promo"
 msgstr "Sem promoção"
+
+#: pricing/views.py
+msgid "all"
+msgstr "todos"
+
+#: pricing/views.py
+msgid "unknown"
+msgstr "desconhecido"
+
+#: pricing/views.py
+#, python-format
+msgid "All %(total)s active listings failed to scrape. Failed retailers: %(retailers)s"
+msgstr "Todas as %(total)s listagens ativas falharam. Retalhistas que falharam: %(retailers)s"
+
+#: pricing/views.py
+#, python-format
+msgid "Scraped %(scraped)s of %(total)s listings. Failed retailers: %(retailers)s"
+msgstr "Extraídas %(scraped)s de %(total)s listagens. Retalhistas que falharam: %(retailers)s"

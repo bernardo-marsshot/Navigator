@@ -896,18 +896,22 @@ def discover_and_add_products(search_term: str = "paper tissue", max_products: i
     return {'added': added_count, 'scraped': scraped_count}
 
 
-def run_scrape_for_all_active() -> int:
+def run_scrape_for_all_active() -> dict:
     """
     Scrape prices for all active SKU listings.
     Only updates prices for existing products - does NOT discover new products.
     For product discovery, use the discover_products management command.
     
     Saves scraping results to 'extração.json' file.
+    
+    Returns:
+        dict with 'count' (successful scrapes) and 'failed_retailers' (list of retailer names that failed)
     """
     import json
     from datetime import datetime
     
     count = 0
+    failed_retailers = set()
     scraping_results = {}
     
     qs = SKUListing.objects.select_related("retailer", "sku").filter(is_active=True, retailer__is_active=True)
@@ -944,9 +948,11 @@ def run_scrape_for_all_active() -> int:
                     print(f"❌ Failed: No price extracted")
                     result_entry['error'] = 'No price extracted'
                     result_entry['raw_information'] = raw_html
+                    failed_retailers.add(listing.retailer.name)
             else:
                 print(f"❌ Failed: No HTML retrieved")
                 result_entry['error'] = 'No HTML retrieved'
+                failed_retailers.add(listing.retailer.name)
         except Exception as e:
             print(f"❌ Exception while scraping listing {listing.id}:")
             print(f"   Retailer: {listing.retailer.name}")
@@ -956,6 +962,7 @@ def run_scrape_for_all_active() -> int:
             print("Traceback:")
             traceback.print_exc()
             result_entry['error'] = f"{type(e).__name__}: {str(e)}"
+            failed_retailers.add(listing.retailer.name)
         
         scraping_results[listing.sku.name] = result_entry
     
@@ -973,4 +980,4 @@ def run_scrape_for_all_active() -> int:
     except Exception as e:
         print(f"\n⚠️ Error saving to JSON: {e}")
     
-    return count
+    return {'count': count, 'failed_retailers': list(failed_retailers)}
