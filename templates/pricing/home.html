@@ -14,7 +14,7 @@
       </button>
     </form>
 
-    <form method="post" action="{% url 'scrape_now' %}" style="display: inline; margin: 0;">
+    <form method="post" action="{% url 'scrape_now' %}" style="display: inline; margin: 0;" id="scrape-form">
       {% csrf_token %}
       <button type="submit" class="btn btn-primary btn-sm" style="min-width:160px; text-align:center;">
         <span style="margin-right: 0.5rem;">🔄</span>
@@ -108,7 +108,78 @@
   div[style*="overflow-y:auto"]::-webkit-scrollbar {
     display: none;
   }
+
+  /* Loading Overlay */
+  #loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #loading-overlay.active {
+    display: flex;
+  }
+
+  /* Loading Popup */
+  .loading-popup {
+    background-color: white;
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .loading-popup h3 {
+    margin: 0 0 1.5rem 0;
+    color: #1f2937;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #e5e7eb;
+    border-top: 5px solid #f97316;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 </style>
 
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+  <div class="loading-popup">
+    <h3>{% trans "A extrair..." %}</h3>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- JavaScript para mostrar o loading -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scrape-form');
+    const overlay = document.getElementById('loading-overlay');
+    
+    if (form && overlay) {
+      form.addEventListener('submit', function() {
+        overlay.classList.add('active');
+      });
+    }
+  });
+</script>
 
 {% endblock %}

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Navigator UK Market Intelligence\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 15:48+0000\n"
+"POT-Creation-Date: 2025-10-03 10:15+0000\n"
 "PO-Revision-Date: 2025-09-29 15:23+0000\n"
 "Last-Translator: Navigator Team\n"
 "Language-Team: Portuguese <pt@navigator.com>\n"
@@ -37,150 +37,169 @@ msgstr "Seletor CSS para texto/etiqueta promocional"
 msgid "Optional: raw extracted text for audit/debug"
 msgstr "Opcional: texto extraído em bruto para auditoria/debug"
 
-#: pricing/views.py:31
+#: pricing/views.py:58
+msgid "No active listings found to scrape."
+msgstr "Nenhuma listagem ativa encontrada para extrair."
+
+#: pricing/views.py:67
+#, python-format
+msgid "All %(total)s active listings failed to scrape. Failed retailers:"
+msgstr ""
+"Todas as %(total)s listagens ativas falharam. Retalhistas que falharam:"
+
+#: pricing/views.py:70
+#, python-format
+msgid "All %(total)s active listings failed to scrape."
+msgstr "Todas as %(total)s listagens ativas falharam."
+
+#: pricing/views.py:75
 #, python-format
 msgid "Successfully scraped %(count)s listings!"
 msgstr "%(count)s listagens extraídas com sucesso!"
 
-#: pricing/views.py:33
-msgid "No active listings found to scrape."
-msgstr "Nenhuma listagem ativa encontrada para extrair."
+#: pricing/views.py:80
+#, python-format
+msgid "Scraped %(scraped)s of %(total)s listings. Failed retailers:"
+msgstr ""
+"Extraídas %(scraped)s de %(total)s listagens. Retalhistas que falharam:"
 
-#: pricing/views.py:35
+#: pricing/views.py:86
+#, python-format
+msgid "Scraped %(scraped)s of %(total)s listings."
+msgstr "Extraídas %(scraped)s de %(total)s listagens."
+
+#: pricing/views.py:94
 #, python-format
 msgid "Error during scraping: %(error)s"
 msgstr "Erro durante a extração: %(error)s"
+
+#: pricing/views.py:105
+#, python-format
+msgid "Data updated successfully for product ID: %(product_id)s"
+msgstr ""
+
+#: pricing/views.py:110
+#, fuzzy, python-format
+#| msgid "Error during scraping: %(error)s"
+msgid "Error updating data: %(error)s"
+msgstr "Erro durante a extração: %(error)s"
+
+#: pricing/views.py:163 templates/pricing/sku_detail.html:96
+msgid "Price Evolution by Retailer"
+msgstr "Evolução de Preços por Retalhista"
+
+#: pricing/views.py:191
+msgid "No promotion"
+msgstr "Sem promoção"
 
 #: templates/base.html:8
 msgid "Navigator UK Market Intelligence (MVP)"
 msgstr "Navigator UK Market Intelligence (MVP)"
 
-#: templates/base.html:388
+#: templates/base.html:260
 msgid "Navigator Logo"
 msgstr "Logótipo Navigator"
 
-#: templates/base.html:426
+#: templates/base.html:293
 msgid "Prototype developed by"
 msgstr "Protótipo desenvolvido por"
 
-#: templates/pricing/home.html:5
+#: templates/pricing/home.html:6
 msgid "SKUs — Latest Prices"
 msgstr "SKUs — Últimos Preços"
 
-#: templates/pricing/home.html:12
+#: templates/pricing/home.html:13
 msgid "Configure"
 msgstr "Configurar"
 
-#: templates/pricing/home.html:20
+#: templates/pricing/home.html:21
 msgid "Scrape Now"
 msgstr "Recolher Dados"
 
-#: templates/pricing/home.html:30
+#: templates/pricing/home.html:45
 msgid "SKU"
 msgstr "SKU"
 
-#: templates/pricing/home.html:31
+#: templates/pricing/home.html:46
 msgid "Name"
 msgstr "Nome"
 
-#: templates/pricing/home.html:32
+#: templates/pricing/home.html:47
 msgid "Latest Price"
 msgstr "Último Preço"
 
-#: templates/pricing/home.html:33 templates/pricing/sku_detail.html:149
+#: templates/pricing/home.html:48 templates/pricing/sku_detail.html:241
 msgid "Promo"
 msgstr "Promoção"
 
-#: templates/pricing/home.html:34
+#: templates/pricing/home.html:49
 msgid "Currency"
 msgstr "Moeda"
 
-#: templates/pricing/home.html:55 templates/pricing/home.html:63
-#: templates/pricing/sku_detail.html:158
+#: templates/pricing/home.html:70 templates/pricing/home.html:80
+#: templates/pricing/sku_detail.html:250
 msgid "No data"
 msgstr "Sem dados"
 
-#: templates/pricing/home.html:76
+#: templates/pricing/home.html:96
 msgid "View Details"
 msgstr "Ver Detalhes"
 
-#: templates/pricing/sku_detail.html:13
+#: templates/pricing/home.html:166
+msgid "A extrair..."
+msgstr "A extrair..."
+
+#: templates/pricing/sku_detail.html:66
 msgid "Back"
 msgstr "Voltar"
 
-#: templates/pricing/sku_detail.html:17
+#: templates/pricing/sku_detail.html:71
 msgid "Report"
 msgstr "Relatorio"
 
-#: templates/pricing/sku_detail.html:23
+#: templates/pricing/sku_detail.html:79
 msgid "Update Data"
 msgstr "Atualizar Dados"
 
-#: templates/pricing/sku_detail.html:38 templates/pricing/sku_detail.html:148
+#: templates/pricing/sku_detail.html:94 templates/pricing/sku_detail.html:240
 msgid "Price"
 msgstr "Preço"
 
-#: templates/pricing/sku_detail.html:39
+#: templates/pricing/sku_detail.html:95
 msgid "Time"
 msgstr "Tempo"
 
-msgid "Scraped from search"
-msgstr "Extraído por pesquisa"
-
-msgid "Auto-extracted"
-msgstr "Auto-extraído"
-
-msgid "No debug info"
-msgstr "Sem informação"
-
-#: templates/pricing/sku_detail.html:40
-msgid "Price Evolution by Retailer"
-msgstr "Evolução de Preços por Retalhista"
-
-#: templates/pricing/sku_detail.html:141
+#: templates/pricing/sku_detail.html:233
 msgid "History"
 msgstr "Histórico"
 
-#: templates/pricing/sku_detail.html:146
+#: templates/pricing/sku_detail.html:238
 msgid "Date"
 msgstr "Data"
 
-#: templates/pricing/sku_detail.html:147
+#: templates/pricing/sku_detail.html:239
 msgid "Retailer"
 msgstr "Retalhista"
 
-#: templates/pricing/sku_detail.html:150
+#: templates/pricing/sku_detail.html:242
 msgid "Note"
 msgstr "Nota"
 
-#: templates/pricing/sku_detail.html:149
-msgid "Promotion"
-msgstr "Promoção"
-
-#: templates/pricing/sku_detail.html:159
+#: templates/pricing/sku_detail.html:251
 msgid "No promo"
 msgstr "Sem promoção"
 
-#: pricing/views.py
-msgid "No promotion"
-msgstr "Sem promoção"
+#: templates/pricing/sku_detail.html:255
+msgid "Scraped from search"
+msgstr "Extraído por pesquisa"
 
-#: pricing/views.py
-#, python-format
-msgid "All %(total)s active listings failed to scrape. Failed retailers:"
-msgstr "Todas as %(total)s listagens ativas falharam. Retalhistas que falharam:"
+#: templates/pricing/sku_detail.html:257
+msgid "Auto-extracted"
+msgstr "Auto-extraído"
 
-#: pricing/views.py
-#, python-format
-msgid "All %(total)s active listings failed to scrape."
-msgstr "Todas as %(total)s listagens ativas falharam."
+#: templates/pricing/sku_detail.html:262
+msgid "No debug info"
+msgstr "Sem informação"
 
-#: pricing/views.py
-#, python-format
-msgid "Scraped %(scraped)s of %(total)s listings. Failed retailers:"
-msgstr "Extraídas %(scraped)s de %(total)s listagens. Retalhistas que falharam:"
-
-#: pricing/views.py
-#, python-format
-msgid "Scraped %(scraped)s of %(total)s listings."
-msgstr "Extraídas %(scraped)s de %(total)s listagens."
+#~ msgid "Promotion"
+#~ msgstr "Promoção"
