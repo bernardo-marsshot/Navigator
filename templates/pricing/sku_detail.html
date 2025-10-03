@@ -8,15 +8,37 @@
     .no-print { display: none !important; }
   }
 
-  /* Ajustes de impressão (A4 portrait) */
+  /* Ajustes de impressão */
   @media print {
     @page { size: A4 portrait; margin: 12mm; }
+    
+    /* Página landscape só para o gráfico */
+    @page landscape-page { size: A4 landscape; margin: 12mm; }
 
-    /* No report, o wrapper não força altura fixa */
-    #chart-wrapper { height: auto !important; }
+    /* Quebra de página antes do gráfico */
+    #chart-wrapper {
+      page-break-before: always;
+      page-break-after: always;
+      page: landscape-page;
+      height: 100vh !important;
+      width: 100% !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-    /* Canvas ocupa largura, com altura controlada (mantém proporção via JS) */
-    #priceChart { width: 100% !important; max-height: 140mm !important; }
+    /* Canvas ocupa espaço disponível na página landscape */
+    #priceChart { 
+      width: 95% !important; 
+      height: 85vh !important;
+      max-width: 100% !important;
+    }
+
+    /* Tabela em páginas portrait */
+    .history-section {
+      page-break-before: always;
+      page: auto;
+    }
 
     /* Texto um pouco mais compacto na tabela */
     table { font-size: 12px; }
@@ -216,9 +238,10 @@
     };
   </script>
 
-  <h3>{% trans "History" %}</h3>
-  <div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-    <table style="background-color: var(--navigator-white) !important; width: 100%;">
+  <div class="history-section">
+    <h3>{% trans "History" %}</h3>
+    <div style="background-color: var(--navigator-white); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+      <table style="background-color: var(--navigator-white) !important; width: 100%;">
       <thead>
         <tr>
           <th>{% trans "Date" %}</th>
@@ -252,6 +275,7 @@
       {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 
 </div>
