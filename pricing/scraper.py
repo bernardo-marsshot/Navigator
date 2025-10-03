@@ -45,6 +45,40 @@ REALISTIC_HEADERS = {
 
 CURRENCY_REGEX = re.compile(r"(?:Â)?([£$€])\s*([0-9]+(?:[.,][0-9]{2})?)", re.UNICODE)
 
+# Global persistent scrapers with cookie jars (one per session)
+_persistent_scrapers = {}
+
+def get_persistent_scraper(retailer_name: str = "default"):
+    """
+    Get or create a persistent cloudscraper client for a retailer.
+    Reuses cookies and session to avoid Cloudflare 403s.
+    """
+    global _persistent_scrapers
+    
+    if retailer_name not in _persistent_scrapers:
+        scraper = cloudscraper.create_scraper()
+        
+        # Get User-Agent with fallback
+        user_agent = ua.chrome if ua else 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        
+        # Randomize headers slightly to avoid fingerprinting
+        chrome_version = random.randint(119, 122)
+        scraper.headers.update({
+            'User-Agent': user_agent.replace('120.0.0.0', f'{chrome_version}.0.0.0'),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
+            'Sec-Ch-Ua': f'"Not_A Brand";v="8", "Chromium";v="{chrome_version}"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+        })
+        
+        _persistent_scrapers[retailer_name] = scraper
+        print(f"🔧 Created persistent scraper for {retailer_name}")
+    
+    return _persistent_scrapers[retailer_name]
+
 def parse_price(text: str) -> Tuple[Optional[str], Optional[Decimal]]:
     if not text:
         return None, None
@@ -76,6 +110,81 @@ def fetch(url: str) -> Optional[str]:
         traceback.print_exc()
         return None
 
+def extract_price_from_json(html: str, url: str) -> Optional[tuple]:
+    """
+    Extract price from embedded JSON in HTML (for sites like Sainsbury's).
+    Looks for window.__PRELOADED_STATE__ or application/ld+json.
+    Returns (currency, price_decimal, price_text) or None
+    """
+    import re
+    
+    try:
+        # Try Sainsbury's __PRELOADED_STATE__
+        if 'sainsburys' in url.lower() or '__PRELOADED_STATE__' in html:
+            preload_match = re.search(r'window\.__PRELOADED_STATE__\s*=\s*({.+?});', html, re.DOTALL)
+            if preload_match:
+                json_str = preload_match.group(1)
+                data = json.loads(json_str)
+                
+                # Navigate through nested structure to find price
+                try:
+                    product_data = data.get('product', {}).get('productDetail', {})
+                    price = product_data.get('price', {}).get('now')
+                    if price:
+                        price_val = float(price)
+                        if 0.01 <= price_val <= 9999.99:
+                            print(f"✅ Extracted price from __PRELOADED_STATE__: £{price_val}")
+                            return ('£', Decimal(str(price_val)), f'£{price_val:.2f}')
+                except (KeyError, TypeError, ValueError) as e:
+                    print(f"⚠️ Error navigating __PRELOADED_STATE__: {e}")
+        
+        # Try application/ld+json (structured data)
+        soup = BeautifulSoup(html, 'html.parser')
+        json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        
+        for script in json_ld_scripts:
+            try:
+                data = json.loads(script.string)
+                
+                # Handle array of objects
+                if isinstance(data, list):
+                    for item in data:
+                        price = extract_price_from_json_ld(item)
+                        if price:
+                            return price
+                else:
+                    price = extract_price_from_json_ld(data)
+                    if price:
+                        return price
+            except (json.JSONDecodeError, AttributeError):
+                continue
+        
+    except Exception as e:
+        print(f"⚠️ JSON extraction error: {e}")
+    
+    return None
+
+def extract_price_from_json_ld(data: dict) -> Optional[tuple]:
+    """Helper to extract price from JSON-LD structured data"""
+    try:
+        # Check for Product schema
+        if data.get('@type') == 'Product':
+            offers = data.get('offers', {})
+            if isinstance(offers, list):
+                offers = offers[0] if offers else {}
+            
+            price = offers.get('price') or offers.get('lowPrice')
+            if price:
+                price_val = float(price)
+                if 0.01 <= price_val <= 9999.99:
+                    currency = offers.get('priceCurrency', '£')
+                    print(f"✅ Extracted price from JSON-LD: {currency}{price_val}")
+                    return (currency, Decimal(str(price_val)), f'{currency}{price_val:.2f}')
+    except (KeyError, TypeError, ValueError):
+        pass
+    
+    return None
+
 def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     """
     Fallback method to extract price from HTML when CSS selectors fail.
@@ -83,6 +192,11 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     Returns (currency, price_decimal, price_text) or None
     """
     import re
+    
+    # First try JSON extraction (better for modern sites)
+    json_price = extract_price_from_json(html, url)
+    if json_price:
+        return json_price
     
     # Find all £X.XX patterns in the HTML
     price_patterns = [
@@ -112,10 +226,11 @@ def extract_price_from_html_fallback(html: str, url: str) -> Optional[tuple]:
     
     return None
 
-def scrape_with_httpx(url: str) -> Optional[str]:
+def scrape_with_httpx(url: str, cookies=None) -> Optional[str]:
     """
     Third fallback scraping method using httpx with HTTP/2.
     HTTP/2 can bypass some modern anti-bot systems.
+    Can accept cookies from cloudscraper for better success rate.
     """
     try:
         import httpx
@@ -137,7 +252,7 @@ def scrape_with_httpx(url: str) -> Optional[str]:
         
         time.sleep(random.uniform(1.5, 3.0))
         
-        with httpx.Client(http2=True, follow_redirects=True, timeout=30.0) as client:
+        with httpx.Client(http2=True, follow_redirects=True, timeout=30.0, cookies=cookies) as client:
             response = client.get(url, headers=headers)
             
             if response.status_code == 200:
@@ -271,65 +386,103 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
         return None
     
     raw_html = None
+    html = None
     
-    # Use cloudscraper for all retailers (Selenium doesn't work in Replit environment)
-    try:
-        scraper = cloudscraper.create_scraper()
-        # Get User-Agent with fallback
-        user_agent = ua.chrome if ua else 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        scraper.headers.update({
-            'User-Agent': user_agent,
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8',
-            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-        })
-        
-        # Add random delay for Tesco (be more polite)
-        if listing.retailer.name == "Tesco":
-            time.sleep(random.uniform(2.0, 4.0))
-        
-        response = scraper.get(listing.url, timeout=20)
-        
-        # Check status code
-        if response.status_code == 403:
-            print(f"⚠️ Access denied (403 Forbidden) - anti-bot protection active")
-            html = None
-        elif response.status_code != 200:
-            print(f"⚠️ Got status {response.status_code} (expected 200)")
-            html = None
-        else:
-            html = response.text
-            raw_html = html  # Store raw HTML for JSON export
-        
-        if html:
-            print(f"   Cloudscraper got {len(html)} bytes (status {response.status_code})")
+    # Use persistent cloudscraper with backoff for reliability
+    scraper = get_persistent_scraper(listing.retailer.name)
+    
+    # Retry with exponential backoff for 403 errors
+    max_retries = 3
+    base_delay = 2.0
+    
+    for attempt in range(max_retries):
+        try:
+            # Add random delay (longer for Tesco)
+            if listing.retailer.name == "Tesco":
+                delay = random.uniform(2.0, 4.0) if attempt == 0 else base_delay * (2 ** attempt) + random.uniform(0, 2)
+                time.sleep(delay)
+            elif attempt > 0:
+                time.sleep(base_delay * (2 ** attempt) + random.uniform(0, 1))
             
-            # Check for challenge/blocked/error pages
-            html_lower = html.lower()
-            if ('<title>just a moment' in html_lower or 
-                '<title>attention required' in html_lower or
-                '<title>error</title>' in html_lower or
-                'checking your browser' in html_lower or
-                'interstitial' in html_lower):
-                print(f"⚠️ Challenge/error page detected for {listing.url}")
+            response = scraper.get(listing.url, timeout=20)
+            
+            # Check status code
+            if response.status_code == 403:
+                print(f"⚠️ Attempt {attempt+1}/{max_retries}: Access denied (403 Forbidden)")
+                if attempt < max_retries - 1:
+                    print(f"   Retrying with backoff ({base_delay * (2 ** (attempt+1)):.1f}s)...")
+                    continue
                 html = None
-                raw_html = html  # Update raw_html to None for blocked pages
-    except Exception as e:
-        print(f"❌ Cloudscraper failed for {listing.url}")
-        print(f"Error: {type(e).__name__}: {e}")
-        print("Traceback:")
-        traceback.print_exc()
-        print("Falling back to simple fetch...")
-        html = fetch(listing.url)
-        raw_html = html  # Store fallback HTML
+            elif response.status_code != 200:
+                print(f"⚠️ Got status {response.status_code} (expected 200)")
+                html = None
+                break
+            else:
+                html = response.text
+                raw_html = html
+                
+                # Check for challenge/blocked/error pages
+                html_lower = html.lower()
+                if ('<title>just a moment' in html_lower or 
+                    '<title>attention required' in html_lower or
+                    '<title>error</title>' in html_lower or
+                    'checking your browser' in html_lower or
+                    'interstitial' in html_lower):
+                    print(f"⚠️ Attempt {attempt+1}/{max_retries}: Challenge/error page detected")
+                    if attempt < max_retries - 1:
+                        print(f"   Retrying with backoff...")
+                        html = None
+                        continue
+                    html = None
+                    raw_html = None
+                else:
+                    print(f"   Cloudscraper got {len(html)} bytes (status {response.status_code})")
+                    break
+                    
+        except Exception as e:
+            print(f"❌ Attempt {attempt+1}/{max_retries}: Cloudscraper error: {type(e).__name__}: {e}")
+            if attempt < max_retries - 1:
+                print(f"   Retrying...")
+                continue
+            else:
+                print("Falling back to simple fetch...")
+                html = fetch(listing.url)
+                raw_html = html
+                break
     
+    # Initialize price variables
+    price = None
+    promo_price = None
+    currency = ""
+    raw_snapshot = ""
+    raw_price_text = ""
+    raw_promo_text = ""
+    
+    # If cloudscraper failed, try httpx/selenium fallbacks immediately
     if not html:
-        return None
+        print(f"🔄 Cloudscraper exhausted, trying fallback methods...")
+        
+        # Try httpx with HTTP/2 (third scraping method) - share cookies from scraper
+        print(f"🔄 Trying httpx with HTTP/2...")
+        html = scrape_with_httpx(listing.url, cookies=scraper.cookies)
+        if html:
+            raw_html = html
+            print(f"   httpx got {len(html)} bytes")
+        
+        # If httpx also failed, try Selenium
+        if not html:
+            print(f"🌐 Trying Selenium (JavaScript rendering)...")
+            html = scrape_with_selenium(listing.url)
+            if html:
+                raw_html = html
+                print(f"   Selenium got {len(html)} bytes")
+        
+        # If all methods failed, return None
+        if not html:
+            print(f"❌ All scraping methods failed")
+            return None
     
+    # Now we have HTML, process it
     soup = BeautifulSoup(html, "html.parser")
     
     # Try configured CSS selectors first
@@ -345,89 +498,22 @@ def scrape_listing(listing: SKUListing) -> Optional[tuple]:
     cur_sym2, promo_price = parse_price(raw_promo_price_text)
     currency = cur_sym or cur_sym2 or ""
 
-    # If CSS selectors failed, try fallback regex method
-    if not price and not promo_price:
+    # If CSS selectors succeeded, set snapshot
+    if price or promo_price:
+        raw_snapshot = (raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or "")
+    else:
+        # Try fallback extraction methods
+        print(f"⚠️ CSS selectors failed, trying fallback extraction...")
         fallback_result = extract_price_from_html_fallback(html, listing.url)
         if fallback_result:
             currency, price, raw_price_text = fallback_result
-            raw_snapshot = f"Fallback regex: {raw_price_text}"
+            raw_snapshot = f"Fallback (JSON/regex): {raw_price_text}"
+            print(f"✅ Price extracted via fallback: {currency}{price}")
         else:
-            # Try httpx with HTTP/2 (third scraping method)
-            print(f"🔄 Trying httpx with HTTP/2...")
-            httpx_html = scrape_with_httpx(listing.url)
-            
-            if httpx_html:
-                raw_html = httpx_html
-                print(f"   httpx got {len(httpx_html)} bytes")
-                
-                soup_httpx = BeautifulSoup(httpx_html, "html.parser")
-                
-                price_el_httpx = soup_httpx.select_one(selectors.price_selector)
-                promo_price_el_httpx = soup_httpx.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
-                
-                raw_price_text_httpx = price_el_httpx.get_text(strip=True) if price_el_httpx else ""
-                raw_promo_price_text_httpx = promo_price_el_httpx.get_text(strip=True) if promo_price_el_httpx else ""
-                
-                cur_sym, price = parse_price(raw_price_text_httpx)
-                cur_sym2, promo_price = parse_price(raw_promo_price_text_httpx)
-                currency = cur_sym or cur_sym2 or ""
-                
-                if not price and not promo_price:
-                    fallback_result_httpx = extract_price_from_html_fallback(httpx_html, listing.url)
-                    if fallback_result_httpx:
-                        currency, price, raw_price_text = fallback_result_httpx
-                        raw_snapshot = f"httpx + Fallback regex: {raw_price_text}"
-                        print(f"✅ Price extracted via httpx fallback: {currency}{price}")
-                else:
-                    raw_snapshot = f"httpx CSS: {raw_price_text_httpx or raw_promo_price_text_httpx}"
-                    print(f"✅ Price extracted via httpx CSS: {currency}{price or promo_price}")
-            
-            # If httpx also failed, fallback to Selenium for JavaScript-heavy sites (e.g., Asda)
-            selenium_html = None
-            if not httpx_html or (not price and not promo_price):
-                print(f"🌐 Trying Selenium (JavaScript rendering)...")
-                selenium_html = scrape_with_selenium(listing.url)
-            
-            if selenium_html:
-                raw_html = selenium_html  # Update with rendered HTML
-                print(f"   Selenium got {len(selenium_html)} bytes")
-                
-                # Re-parse with BeautifulSoup
-                soup_selenium = BeautifulSoup(selenium_html, "html.parser")
-                
-                # Try CSS selectors again on rendered HTML
-                price_el_selenium = soup_selenium.select_one(selectors.price_selector)
-                promo_price_el_selenium = soup_selenium.select_one(selectors.promo_price_selector) if selectors.promo_price_selector else None
-                
-                raw_price_text_selenium = price_el_selenium.get_text(strip=True) if price_el_selenium else ""
-                raw_promo_price_text_selenium = promo_price_el_selenium.get_text(strip=True) if promo_price_el_selenium else ""
-                
-                cur_sym, price = parse_price(raw_price_text_selenium)
-                cur_sym2, promo_price = parse_price(raw_promo_price_text_selenium)
-                currency = cur_sym or cur_sym2 or ""
-                
-                # If still no price, try fallback regex on rendered HTML
-                if not price and not promo_price:
-                    fallback_result_selenium = extract_price_from_html_fallback(selenium_html, listing.url)
-                    if fallback_result_selenium:
-                        currency, price, raw_price_text = fallback_result_selenium
-                        raw_snapshot = f"Selenium + Fallback regex: {raw_price_text}"
-                        print(f"✅ Price extracted via Selenium fallback: {currency}{price}")
-                    else:
-                        # No price found even with Selenium
-                        print(f"❌ No price extracted even with JavaScript rendering")
-                        time.sleep(random.uniform(0.5, 1.2))
-                        return (None, raw_html)
-                else:
-                    raw_snapshot = f"Selenium CSS: {raw_price_text_selenium or raw_promo_price_text_selenium}"
-                    print(f"✅ Price extracted via Selenium CSS: {currency}{price or promo_price}")
-            else:
-                # Selenium also failed, return raw_html for analysis
-                print(f"❌ Selenium also failed")
-                time.sleep(random.uniform(0.5, 1.2))
-                return (None, raw_html)
-    else:
-        raw_snapshot = (raw_price_text or "") + " | promo: " + (raw_promo_price_text or "") + " | " + (raw_promo_text or "")
+            # No price found
+            print(f"❌ No price extracted from HTML")
+            time.sleep(random.uniform(0.5, 1.2))
+            return (None, raw_html)
 
     pp = PricePoint.objects.create(
         sku_listing=listing,
