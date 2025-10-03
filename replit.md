@@ -14,7 +14,7 @@ Navigator UK Market Intelligence is a Django-based web scraping platform designe
 - **"Scrape Now" Button Behavior**: Updates prices for existing products ONLY (does not add new products)
   - Uses cloudscraper for better reliability against Cloudflare protection
   - Fallback to regex price extraction when CSS selectors fail
-  - Clear feedback: shows how many succeeded and how many failed
+  - Clear feedback: shows retailer names that failed instead of just failure count
   - Selenium detection for blocked/error pages
 - **Product Discovery**: Separate from "Scrape Now" - use `discover_products` command to add new products
   - Auto-discovers products from Tesco search pages (not individual pages)
