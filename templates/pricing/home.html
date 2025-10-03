@@ -129,11 +129,8 @@
 
   /* Loading Popup */
   .loading-popup {
-    background-color: white;
     padding: 2.5rem 3rem;
-    border-radius: 12px;
     text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
 
   .loading-popup h3 {
@@ -155,27 +152,31 @@
   }
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
 </style>
 
 <!-- Loading Overlay -->
 <div id="loading-overlay">
   <div class="loading-popup">
-    <h3>{% trans "A extrair..." %}</h3>
     <div class="spinner"></div>
   </div>
 </div>
 
 <!-- JavaScript para mostrar o loading -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('scrape-form');
     const overlay = document.getElementById('loading-overlay');
-    
+
     if (form && overlay) {
-      form.addEventListener('submit', function() {
+      form.addEventListener('submit', function () {
         overlay.classList.add('active');
       });
     }
