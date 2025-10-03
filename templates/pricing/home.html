@@ -64,9 +64,7 @@
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {% with latest_pp=latest|get_item:sku.id %}
-          {% if latest_pp and latest_pp.promo_price %}
-          {{ latest_pp.promo_price }}
-          {% elif latest_pp and latest_pp.price %}
+          {% if latest_pp and latest_pp.price %}
           {{ latest_pp.price }}
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
@@ -76,8 +74,8 @@
         <td
           style="padding:8px 12px; border:1px solid #ddd; background-color:#ffffff !important; color:var(--navigator-black) !important;">
           {% with latest_pp=latest|get_item:sku.id %}
-          {% if latest_pp and latest_pp.promo_text %}
-          {{ latest_pp.promo_text }}
+          {% if latest_pp and latest_pp.promo_price %}
+          {{ latest_pp.promo_price }} ({{ latest_pp.promo_text }})
           {% else %}
           <span style="color:#999;">{% trans "No data" %}</span>
           {% endif %}
